@@ -7,7 +7,7 @@ routes it to the best-ranked specialist on Telegraph, pays per call, and returns
 can verify against the network yourself. Every answer comes back proven, not guessed, with the provider that
 produced it and the price paid.
 
-Live demo: https://axiom-pi-sandy.vercel.app
+Live demo: https://axiom-telegraph.vercel.app
 
 If Axiom is useful to you, star the repo. It takes a second and it helps.
 
