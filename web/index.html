@@ -31,23 +31,27 @@ h1,h2,h3{font-family:var(--f-disp);font-weight:600;margin:0;text-wrap:balance}
 h1 em,h2 em{font-style:normal;color:var(--a)}
 
 /* ---------- hero ---------- */
-.hero{position:relative;height:max(700px,100svh);overflow:hidden;background:var(--bg);user-select:none;-webkit-user-select:none}
+.world{position:fixed;inset:0;z-index:0;overflow:hidden}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;cursor:crosshair}
 .nogl #cv{display:none}
-.veil{position:absolute;inset:0;pointer-events:none;z-index:1;
+.scrim{position:absolute;inset:0;pointer-events:none;opacity:min(1,calc(var(--sp,0)*1.3));
+  background:radial-gradient(ellipse 56% 70% at 50% 52%,color-mix(in srgb,var(--bg) 62%,transparent) 0%,color-mix(in srgb,var(--bg) 25%,transparent) 60%,transparent 100%)}
+.page{position:relative;z-index:1;pointer-events:none}
+.hero{position:relative;min-height:100svh;display:grid;grid-template-rows:auto 1fr;user-select:none;-webkit-user-select:none}
+.veil{position:absolute;inset:0;pointer-events:none;z-index:0;
   background:linear-gradient(90deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 86%,transparent) 30%,transparent 56%),linear-gradient(180deg,var(--bg) 0%,transparent 15%)}
-.halo{position:absolute;left:69%;top:25%;width:46vmin;height:46vmin;pointer-events:none;transform:translate(-50%,-50%);z-index:1}
+.halo{position:absolute;left:69%;top:25%;width:46vmin;height:46vmin;pointer-events:none;transform:translate(-50%,-50%);opacity:max(0,calc(1 - var(--sp,0)*1.4))}
 .halo svg{width:100%;height:100%;overflow:visible;display:block}
 .spin{animation:spin 180s linear infinite}.spin-r{animation:spin 110s linear infinite reverse}
 @keyframes spin{to{transform:rotate(360deg)}}
-#labels{position:absolute;inset:0;pointer-events:none;z-index:2}
+#labels{position:absolute;inset:0;pointer-events:none;opacity:max(0,calc(1 - var(--sp,0)*4))}
 .lbl{position:absolute;left:0;top:0;opacity:0;font:500 10.5px/1.35 var(--f-mono);letter-spacing:.06em;color:var(--ink);background:var(--chip);border:1px solid var(--line);padding:3px 7px;border-radius:7px;white-space:nowrap;will-change:transform}
 .lbl b{color:var(--rust);font-weight:600;margin-right:4px}
 .lbl.top{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 15%,transparent)}
 .lbl .x{display:none;color:var(--dim)} .lbl.on .x{display:block}
 .readout{position:absolute;left:0;top:0;z-index:2;font:500 10px var(--f-mono);letter-spacing:.08em;color:var(--rust);pointer-events:none;white-space:nowrap}
 
-.nav{position:absolute;top:0;left:0;right:0;padding-block:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:5}
+.nav{position:relative;padding-block:18px;pointer-events:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:5}
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--f-disp);font-weight:600;font-size:23px;letter-spacing:.02em;color:var(--ink);text-decoration:none}
 .beta{font:500 10.5px var(--f-mono);letter-spacing:.14em;color:var(--dim);border:1px solid var(--line);padding:3px 7px;border-radius:6px}
 .links{display:flex;align-items:center;gap:24px;font-size:15px}
@@ -58,27 +62,27 @@ h1 em,h2 em{font-style:normal;color:var(--a)}
 .ghbtn .st{color:var(--rust)}
 .hud{position:absolute;right:max(24px,env(safe-area-inset-right,0px));top:78px;z-index:3;font:500 10.5px var(--f-mono);letter-spacing:.14em;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
 
-.copy{position:absolute;left:0;top:52%;transform:translateY(-50%);width:min(640px,50%);display:grid;gap:18px;z-index:4;pointer-events:none}
+.copy{position:relative;align-self:center;width:min(640px,52%);display:grid;gap:clamp(12px,2.2vh,18px);padding-block:clamp(16px,4vh,40px) clamp(24px,6vh,64px);pointer-events:none}
 .copy>*{pointer-events:auto}
-.hero h1{font-size:clamp(40px,5.2vw,80px);line-height:.97;letter-spacing:-.045em}
-.lede{font-size:clamp(16px,1.3vw,19px);line-height:1.5;color:var(--dim);margin:0;max-width:44ch}
-.ask{background:var(--chip);border:1px solid var(--line);border-radius:18px;padding:16px 14px 12px 18px;display:grid;gap:14px;max-width:560px;box-shadow:0 22px 48px -30px #1d203855}
-.ask input{border:0;background:transparent;font:16.5px var(--f-ui);color:var(--ink);outline:none;width:100%;padding:0;min-width:0}
+.hero h1{font-size:clamp(34px,min(5.2vw,9vh),80px);line-height:.97;letter-spacing:-.045em}
+.lede{font-size:clamp(15px,min(1.3vw,2.4vh),19px);line-height:1.5;color:var(--dim);margin:0;max-width:44ch}
+.ask{background:var(--chip);border:1px solid var(--line);border-radius:16px;padding:12px 10px 10px 16px;display:grid;gap:8px;max-width:540px;box-shadow:0 22px 48px -30px #1d203855}
+.ask input{border:0;background:transparent;font:15.5px var(--f-ui);color:var(--ink);outline:none;width:100%;padding:0;min-width:0}
 .ask input::placeholder{color:var(--dim)}
 .ask:focus-within{border-color:color-mix(in srgb,var(--a) 60%,transparent)}
 .ask .row{display:flex;justify-content:flex-end;align-items:center;gap:10px}
-.pill{font:500 13px var(--f-ui);color:var(--a);border:1px solid color-mix(in srgb,var(--a) 50%,transparent);background:color-mix(in srgb,var(--a) 7%,transparent);padding:6px 11px;border-radius:9px;display:flex;gap:7px;align-items:center}
-.go{width:42px;height:42px;border-radius:50%;border:0;background:var(--rust);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.pill{font:500 11.5px var(--f-ui);color:var(--a);border:1px solid color-mix(in srgb,var(--a) 40%,transparent);background:color-mix(in srgb,var(--a) 7%,transparent);padding:3px 8px;border-radius:7px;display:flex;gap:6px;align-items:center}
+.pill svg{width:9px;height:9px}
+.go{width:32px;height:32px;border-radius:50%;border:0;background:var(--rust);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
 .go:disabled{opacity:.55;cursor:default}
 .note{font:500 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);display:flex;gap:9px;align-items:center}
 .note i{width:6px;height:6px;border-radius:50%;background:var(--a);flex:none}
 .chips{display:flex;flex-wrap:wrap;gap:8px;max-width:600px}
-.chip{display:flex;align-items:center;gap:8px;font:14px var(--f-ui);color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer}
+.chip{display:flex;align-items:center;gap:7px;font:13.5px var(--f-ui);color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:11px;padding:7px 11px;cursor:pointer}
 .chip svg{color:var(--rust);flex:none}
 .chip:hover{border-color:color-mix(in srgb,var(--a) 55%,transparent)}
-.starline{font-size:13.5px;color:var(--dim);margin:0}
 
-.term{position:absolute;right:max(24px,env(safe-area-inset-right,0px));bottom:26px;width:min(450px,38%);z-index:4;background:var(--panel);border:1px solid var(--line);border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:12.5px/1.65 var(--f-mono);box-shadow:0 22px 48px -30px #1d203866}
+.term{position:absolute;right:max(24px,env(safe-area-inset-right,0px));bottom:26px;width:min(440px,38%);z-index:4;pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:12.5px/1.65 var(--f-mono);box-shadow:0 22px 48px -30px #1d203866}
 .th{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.14em;color:var(--dim)}
 .th .dot{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 22%,transparent)}
 #tstat{margin-left:auto;color:var(--rust)}
@@ -92,26 +96,30 @@ h1 em,h2 em{font-style:normal;color:var(--a)}
 .blk.new{background:var(--a);border-color:var(--a);opacity:1}
 
 @media (max-width:860px){
-  .hero{height:max(860px,100svh)}
-  .veil{background:linear-gradient(180deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 90%,transparent) 50%,transparent 66%)}
+  .hero{min-height:0;display:block}
+  .veil{background:linear-gradient(180deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 88%,transparent) 42%,transparent 58%)}
   .links>a.t,.hud{display:none}
-  .halo{left:50%;top:57%;width:40vmin;height:40vmin}
-  .copy{top:76px;transform:none;width:100%;gap:14px}
+  .halo{left:50%;top:62%;width:40vmin;height:40vmin}
+  .copy{width:100%;gap:14px;padding-block:8px 0}
+  .hero .skyspace{display:block;height:max(240px,40svh)}
   .lede{font-size:15px}
-  .term{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;bottom:16px}
+  .term{position:relative;left:auto;right:auto;bottom:auto;width:auto;margin:0 max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
   .tb{min-height:8.8em;max-height:11em;font-size:11.5px}
   .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
   .chip{flex:none}
 }
-@media (max-width:480px){ .lede,.starline{display:none} .logo{font-size:20px} .ghbtn .gl{display:none} .hero h1{font-size:36px} }
+@media (max-width:480px){ .lede{display:none} .logo{font-size:20px} .ghbtn .gl{display:none} .hero h1{font-size:36px} }
 
 /* ---------- sections ---------- */
-.sec{max-width:1240px;margin:0 auto;padding-block:96px 24px;display:grid;gap:36px}
-.sec-head{display:grid;gap:14px;max-width:760px}
+.skyspace{display:none}
+.feather{background:var(--bg);box-shadow:0 0 56px 40px color-mix(in srgb,var(--bg) 88%,transparent);pointer-events:auto}
+.sec{max-width:1160px;margin:0 auto;padding-block:clamp(120px,18vh,200px) 0;display:grid;gap:44px}
+.sec-head{display:grid;gap:14px;max-width:760px;justify-self:start;border-radius:28px}
 .sec-head h2{font-size:clamp(32px,4vw,54px);line-height:1;letter-spacing:-.04em}
 .sec-head p{margin:0;color:var(--dim);font-size:17px;max-width:60ch}
 .cases{display:grid;gap:20px}
-.case{border:1px solid var(--line);border-radius:20px;background:var(--paper);overflow:hidden}
+.cases{gap:72px}
+.case{border-radius:28px;overflow:hidden}
 .case>header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding:22px 24px 18px;border-bottom:1px solid var(--line)}
 .case .qwrap{display:grid;gap:8px;min-width:0;flex:1 1 420px}
 .tag{font:500 11.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--rust)}
@@ -121,7 +129,7 @@ h1 em,h2 em{font-style:normal;color:var(--a)}
 .vs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)}
 @media (max-width:760px){.vs{grid-template-columns:minmax(0,1fr)}}
 .plain,.axa{padding:22px 24px;display:grid;gap:14px;align-content:start;min-width:0}
-.plain{color:var(--dim);border-right:1px solid var(--line)}
+.plain{color:var(--dim);border-right:1px solid var(--line);background:color-mix(in srgb,var(--ink) 2.5%,transparent)}
 @media (max-width:760px){.plain{border-right:0;border-bottom:1px solid var(--line)}}
 .lab{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font:500 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 .axa .lab{color:var(--ink)}
@@ -139,35 +147,42 @@ h1 em,h2 em{font-style:normal;color:var(--a)}
 .verify{justify-self:start;display:inline-flex;align-items:center;gap:8px;font:500 13.5px var(--f-ui);color:var(--a);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--a) 40%,transparent);padding-bottom:1px}
 .verify:hover{border-bottom-color:var(--a)}
 
-.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--line);gap:1px}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-radius:28px;overflow:hidden;gap:0}
 @media (max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.steps{grid-template-columns:minmax(0,1fr)}}
-.step{background:var(--paper);padding:24px;display:grid;gap:10px;align-content:start;min-width:0}
+.step{padding:26px;display:grid;gap:10px;align-content:start;min-width:0;border-left:1px solid var(--line)}
+.step:first-child{border-left:0}
+@media (max-width:900px){.step{border-left:0;border-top:1px solid var(--line)}.step:nth-child(-n+2){border-top:0}.step:nth-child(even){border-left:1px solid var(--line)}}
+@media (max-width:520px){.step:nth-child(2){border-top:1px solid var(--line)}.step:nth-child(even){border-left:0}}
 .step .n{font:500 11.5px var(--f-mono);letter-spacing:.12em;color:var(--rust)}
 .step h3{font-size:22px;letter-spacing:-.02em}
 .step p{margin:0;color:var(--dim)}
-.api{border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:18px 20px;font:13px/1.7 var(--f-mono);overflow-x:auto;color:var(--ink);white-space:pre;margin:0}
+.api{border-radius:22px;padding:20px 24px;font:13px/1.7 var(--f-mono);overflow-x:auto;color:var(--ink);white-space:pre;margin:0}
 .api .k{color:var(--rust)} .api .s{color:var(--a)} .api .c{color:var(--faint)}
 
-.starband{max-width:1240px;margin:0 auto;padding-block:72px 40px}
-.starcard{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:var(--paper);padding:40px clamp(24px,4vw,48px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px}
+.starband{max-width:1240px;margin:0 auto;padding-block:clamp(120px,18vh,200px) clamp(100px,14vh,160px)}
+.starcard{position:relative;overflow:hidden;border-radius:28px;padding:40px clamp(24px,4vw,48px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px}
 .starcard h2{font-size:clamp(30px,3.6vw,48px);letter-spacing:-.04em;line-height:1}
 .starcard p{margin:10px 0 0;color:var(--dim);max-width:52ch}
 .starcard .deco{position:absolute;right:-60px;top:-80px;width:280px;height:280px;opacity:.55;pointer-events:none}
 .ghbig{position:relative;display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 22px;border-radius:14px;background:var(--ink);color:var(--bg);text-decoration:none;font-weight:600;font-size:16px}
 .ghbig .st{color:var(--rust)}
-footer{max-width:1240px;margin:0 auto;padding-block:28px 48px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between;color:var(--dim);font-size:13.5px}
+footer{position:relative;pointer-events:auto;background:var(--bg);box-shadow:0 -30px 60px 10px color-mix(in srgb,var(--bg) 90%,transparent);max-width:none;margin:0;padding-block:28px 48px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between;color:var(--dim);font-size:13.5px}
 footer nav{display:flex;flex-wrap:wrap;gap:20px}
 footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.spin,.spin-r,.cur{animation:none}}
 </style>
 
-<section class="hero" id="hero">
-  <canvas id="cv" aria-hidden="true"></canvas>
-  <div class="halo" id="halo" aria-hidden="true"></div>
-  <div class="veil"></div>
-  <div id="labels" aria-hidden="true"></div>
+<div class="world" id="world" aria-hidden="true">
+  <canvas id="cv"></canvas>
+  <div class="halo" id="halo"></div>
+  <div class="scrim"></div>
+  <div id="labels"></div>
   <div class="readout" id="readout" hidden></div>
+</div>
+<main class="page">
+<section class="hero" id="hero">
+  <div class="veil"></div>
 
   <header class="nav in">
     <a class="logo" href="#hero" aria-label="Axiom home">
@@ -193,8 +208,8 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
       <label class="sr" for="q">Your question</label>
       <input id="q" name="q" type="text" maxlength="500" placeholder="Ask anything, e.g. Is binance.com safe right now?">
       <div class="row">
-        <span class="pill"><svg width="12" height="12" viewBox="-6 -6 12 12" aria-hidden="true"><rect x="-3.6" y="-3.6" width="7.2" height="7.2" transform="rotate(45)" fill="currentColor"/></svg>Verified ON</span>
-        <button class="go" id="go" type="submit" aria-label="Ask"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        <span class="pill"><svg viewBox="-6 -6 12 12" aria-hidden="true"><rect x="-3.6" y="-3.6" width="7.2" height="7.2" transform="rotate(45)" fill="currentColor"/></svg>Verified ON</span>
+        <button class="go" id="go" type="submit" aria-label="Ask"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
       </div>
     </form>
     <div class="note"><i></i>From 0.01 USD per answer · receipt included</div>
@@ -203,8 +218,8 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
       <button class="chip" type="button" data-ex="1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>LEI of Citigold Corporation</button>
       <button class="chip" type="button" data-ex="2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Is binance.com safe right now?</button>
     </div>
-    <p class="starline">Useful for your agents? <a href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener">Star Axiom on GitHub</a>, it helps a lot.</p>
   </div>
+  <div class="skyspace"></div>
 
   <aside class="term" aria-label="Live run">
     <div class="th"><span class="dot"></span>LIVE RUN<span id="tstat">ready</span></div>
@@ -214,13 +229,13 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
 </section>
 
 <section class="sec in" id="examples">
-  <div class="sec-head">
+  <div class="sec-head feather">
     <div class="eb">Three real runs · receipts resolve on a public node</div>
     <h2>A plain model guesses. <em>Axiom shows its receipt.</em></h2>
     <p>The same three questions, asked of a plain language model and of Axiom. Every Axiom answer names its source and its cost, and carries a receipt anyone can check.</p>
   </div>
   <div class="cases">
-    <article class="case">
+    <article class="case feather">
       <header><div class="qwrap"><span class="tag">Sanctions check</span><h3>Is “Rosoboronexport” on the OFAC sanctions list?</h3></div><button class="replay" type="button" data-replay="0">Replay on the terrain ↑</button></header>
       <div class="vs">
         <div class="plain"><div class="lab">Plain model</div><p>“From general knowledge, Rosoboronexport is subject to US sanctions and has been placed on the OFAC SDN list. For the exact listing and date, consult the OFAC website.”</p><div class="none">No source, no receipt</div></div>
@@ -231,7 +246,7 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
         </div>
       </div>
     </article>
-    <article class="case">
+    <article class="case feather">
       <header><div class="qwrap"><span class="tag">Company identity</span><h3>What is the exact LEI of Citigold Corporation Limited?</h3></div><button class="replay" type="button" data-replay="1">Replay on the terrain ↑</button></header>
       <div class="vs">
         <div class="plain"><div class="lab">Plain model</div><p>“I cannot provide the exact LEI of Citigold Corporation Limited from general knowledge, as this identifier requires a reliable data source to confirm.”</p><div class="none">No source, no receipt</div></div>
@@ -242,7 +257,7 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
         </div>
       </div>
     </article>
-    <article class="case">
+    <article class="case feather">
       <header><div class="qwrap"><span class="tag">URL safety</span><h3>Is https://binance.com safe to use right now?</h3></div><button class="replay" type="button" data-replay="2">Replay on the terrain ↑</button></header>
       <div class="vs">
         <div class="plain"><div class="lab">Plain model</div><p>“From general knowledge, Binance is one of the largest crypto exchanges and is generally considered safe, though it depends on regional regulations and your own account security.”</p><div class="none">No source, no receipt</div></div>
@@ -257,18 +272,18 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
 </section>
 
 <section class="sec in" id="how">
-  <div class="sec-head">
+  <div class="sec-head feather">
     <div class="eb">How it works</div>
     <h2>Ask, route, pay, <em>prove.</em></h2>
     <p>One call from your agent. Axiom does the finding, the paying and the proving, and hands back an answer you can cite.</p>
   </div>
-  <div class="steps">
+  <div class="steps feather">
     <div class="step"><span class="n">1 · ASK</span><h3>Plain language in</h3><p>Send any question as text. No provider to pick, no schema to learn.</p></div>
     <div class="step"><span class="n">2 · ROUTE</span><h3>Top-ranked specialist</h3><p>Axiom picks the specialist ranked highest for that kind of question on the Telegraph protocol, by independent ranking.</p></div>
     <div class="step"><span class="n">3 · PAY</span><h3>Per call, from 0.01 USD</h3><p>The specialist is paid for this one answer. No subscription, no key to manage on your side.</p></div>
     <div class="step"><span class="n">4 · PROVE</span><h3>Cited answer, on-chain receipt</h3><p>You get the answer, its source and a receipt hash that resolves on a public node for anyone to verify.</p></div>
   </div>
-<pre class="api" aria-label="Request and response shape"><span class="k">POST</span> /api/ask
+<pre class="api feather" aria-label="Request and response shape"><span class="k">POST</span> /api/ask
 { <span class="s">"task"</span>: "What is the exact LEI of Citigold Corporation Limited?" }
 
 <span class="c">→ 200</span>
@@ -277,13 +292,14 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
 </section>
 
 <section class="starband in">
-  <div class="starcard">
+  <div class="starcard feather">
     <svg class="deco" viewBox="-100 -100 200 200" aria-hidden="true"><circle r="96" fill="none" stroke="var(--gold)" stroke-width=".4" stroke-dasharray=".4 2.4"/><circle r="88" fill="none" stroke="var(--gold)" stroke-width="2.4" stroke-dasharray=".22 1.8" opacity=".5"/><circle r="78" fill="none" stroke="var(--gold)" stroke-width=".4"/><rect x="-3" y="-3" width="6" height="6" transform="rotate(30) translate(0 -88) rotate(45)" fill="var(--rust)"/></svg>
     <div><div class="eb">Open source</div><h2>Star Axiom on GitHub.</h2><p>If verified answers are useful for your agents, a star helps more builders find it. It takes one click.</p></div>
     <a class="ghbig" href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener"><span class="st">★</span>Star on GitHub</a>
   </div>
 </section>
 
+</main>
 <footer class="in">
   <span><b style="color:var(--ink);font-weight:600">AXIOM</b> · The verified answer layer for agents.</span>
   <nav aria-label="Footer"><a href="#examples">Examples</a><a href="#how">How it works</a><a href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener">GitHub</a></nav>
@@ -385,7 +401,7 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
   }
   requestAnimationFrame(tick);
   var hero = document.getElementById("hero");
-  ["pointermove","pointerdown","keydown"].forEach(function(ev){ hero.addEventListener(ev, function(){ lastInput = performance.now(); }, { passive:true }); });
+  ["pointermove","pointerdown","keydown"].forEach(function(ev){ window.addEventListener(ev, function(){ lastInput = performance.now(); }, { passive:true }); });
   if ("IntersectionObserver" in window) new IntersectionObserver(function(es){ heroVisible = es[0].isIntersecting; }).observe(hero);
 
   var chips = document.querySelectorAll("[data-ex]");
@@ -423,6 +439,26 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
       .then(function(){ clearTimeout(to); go.disabled = false; });
   });
   render();
+
+  /* scroll progress for the backdrop */
+  function onScroll(){ root.style.setProperty("--sp", Math.min(1.5, (window.scrollY || 0) / Math.max(1, window.innerHeight)).toFixed(3)); }
+  window.addEventListener("scroll", onScroll, { passive:true }); onScroll();
+
+  /* placeholder that types example questions */
+  var PH = ["Is binance.com safe to use right now?", "Is Rosoboronexport on the OFAC list?", "What is the LEI of Citigold Corporation?", "Is this wallet address sanctioned?", "Which company owns this domain?"];
+  if (!RM){
+    var pi = 0, pc = 0, pdir = 1, pwait = 0;
+    setInterval(function(){
+      if (document.activeElement === qIn || qIn.value){ return; }
+      if (pwait > 0){ pwait--; return; }
+      var full = PH[pi];
+      pc += pdir;
+      if (pc >= full.length){ pc = full.length; pdir = -1; pwait = 34; }
+      else if (pc <= 0){ pc = 0; pdir = 1; pi = (pi+1) % PH.length; pwait = 4; }
+      qIn.setAttribute("placeholder", "Ask anything, e.g. " + full.slice(0, pc) + (pdir > 0 ? "▍" : ""));
+    }, 55);
+    qIn.addEventListener("focus", function(){ qIn.setAttribute("placeholder", "Ask anything, e.g. Is binance.com safe right now?"); });
+  }
 })();
 </script>
 
@@ -431,7 +467,7 @@ footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 THREE.ColorManagement.enabled = false;
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const hero = document.getElementById("hero"), canvas = document.getElementById("cv");
+const hero = document.getElementById("world"), canvas = document.getElementById("cv");
 let r = null;
 try { r = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:"high-performance" }); if (!r.capabilities.isWebGL2) throw new Error("webgl2"); }
 catch(e){ r = null; hero.classList.add("nogl"); }
@@ -542,12 +578,12 @@ document.fonts && document.fonts.ready.then(() => { drawGlyphs(); gTex.needsUpda
 const rt = new THREE.WebGLRenderTarget(1,1,{ type:THREE.HalfFloatType });
 const pu = { tDiffuse:{value:rt.texture}, tGlyph:{value:gTex}, uRes:{value:new THREE.Vector2()}, uCell:{value:9},
   uBg:{value:P.bg}, uA:{value:P.a}, uB:{value:P.b}, uC:{value:P.c}, uG:{value:P.g}, uLight:P.light,
-  uSun:{value:new THREE.Vector2()}, uSunR:{value:80}, uPulse:{value:0}, uMouse:{value:new THREE.Vector2(-999,-999)}, uScan:{value:0}, uTime:{value:0} };
+  uSun:{value:new THREE.Vector2()}, uSunR:{value:80}, uPulse:{value:0}, uMouse:{value:new THREE.Vector2(-999,-999)}, uScan:{value:0}, uTime:{value:0}, uDim:{value:0} };
 const pScene = new THREE.Scene(), pCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
 pScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial({ uniforms:pu, depthTest:false, depthWrite:false,
   vertexShader:`void main(){ gl_Position = vec4(position.xy,0.,1.); }`,
   fragmentShader:`
-  uniform sampler2D tDiffuse, tGlyph; uniform vec2 uRes, uSun, uMouse; uniform float uCell, uLight, uSunR, uPulse, uScan, uTime;
+  uniform sampler2D tDiffuse, tGlyph; uniform vec2 uRes, uSun, uMouse; uniform float uCell, uLight, uSunR, uPulse, uScan, uTime, uDim;
   uniform vec3 uBg, uA, uB, uC, uG;
   float n21(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
   void main(){
@@ -572,13 +608,13 @@ pScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial
       col = mix(col, uC, smoothstep(.42, .86, dens));
       if (s.a < .6){ idx = s.r > .5 ? 14. : (n21(cell) > .55 ? 15. : 0.); col = uA; }
       else if (s.a > .9 && fog < .55){ idx = 15.; col = uB; }
-      amt = 1. - fog*.5;
+      amt = (1. - fog*.5)*(1. - uDim);
       vec2 gg = edgeD > .045 ? gd : gl;
       if ((edgeD > .045 || edgeL > .42) && s.a > .6){
         float ea = mod(atan(gg.y, gg.x) + 1.5707963 + 3.14159265/8., 3.14159265);
         idx = 10. + mod(floor(ea/(3.14159265/4.)), 4.);
         col = edgeD > .045 ? uC : mix(uC, uB, .5);
-        amt = 1. - fog*.35;
+        amt = (1. - fog*.35)*(1. - uDim*.8);
       }
       float dm = length(cc - uMouse);
       if (uScan > .01){
@@ -587,7 +623,7 @@ pScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial
         if (abs(dm - R) < uCell*.55){ idx = 15.; col = uB; amt = uScan; }
       }
     }
-    if (sky || s.b > .82){
+    if ((sky || s.b > .82) && uDim < .6){
       vec2 d = cc - uSun; float pr = length(d), rr = pr/uSunR, ang = atan(d.y, d.x);
       float P = 6.2831853/28.;
       float ra = floor(ang/P + .5)*P, perp = pr*abs(sin(ang - ra));
@@ -601,6 +637,7 @@ pScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial
         idx = 10. + mod(dir, 4.); col = mix(uLight > .5 ? mix(uG, uB, .35) : uG, uB, uPulse*.5); amt = 1. - smoothstep(.9, len1, rr)*.55;
       }
       else if (sky && rr > 2.7 && rr < 2.8 + uPulse){ if (n21(cell) > .6){ idx = 15.; col = uG; amt = .6; } }
+      amt *= 1. - uDim*1.6;
     }
     vec3 paper = uBg + (n21(fc + floor(uTime*8.)) - .5)*(uLight > .5 ? .028 : .018);
     if (idx < 0.){ gl_FragColor = vec4(paper, 1.); return; }
@@ -664,7 +701,7 @@ function resize(){
   cam.aspect = W/H; cam.fov = narrow ? 64 : 50; cam.updateProjectionMatrix();
   rt.setSize(Math.ceil(buf.x/2), Math.ceil(buf.y/2));
   pu.uCell.value = Math.round((narrow ? 7.5 : 9)*PR); pu.uRes.value.copy(buf);
-  const sun = { x: narrow ? W*.5 : W*.69, y: narrow ? H*.57 : H*.25, r: Math.min(W,H)*(narrow ? .075 : .085) };
+  const sun = { x: narrow ? W*.5 : W*.69, y: narrow ? H*.62 : H*.25, r: Math.min(W,H)*(narrow ? .075 : .085) };
   pu.uSun.value.set(sun.x*PR, (H - sun.y)*PR); pu.uSunR.value = sun.r*PR;
   const hsz = sun.r*2*2.7;
   Object.assign(halo.style, { left:sun.x+"px", top:sun.y+"px", width:hsz+"px", height:hsz+"px" });
@@ -709,7 +746,8 @@ addEventListener("ax:arrive", () => {
 
 /* loop */
 let visible = true, speed = 1.8, intro = RM ? 1 : 0, camY = 6, scan = 0;
-new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(hero);
+let sp = 0; const readSp = () => { sp = Math.min(1.5, (scrollY || 0)/Math.max(1, innerHeight)); dirty = true; };
+addEventListener("scroll", readSp, { passive:true }); readSp();
 const hud = document.getElementById("hud");
 const proj = new THREE.Vector3(), v3 = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3(), nv = new THREE.Vector2();
 let last = performance.now(), hudT = 0;
@@ -727,11 +765,12 @@ function frame(t){
   if (intro >= 1) window.AXFX_READY = true;
   const qc = CAMZ - fly, cx = path(qc);
   let gmax = -9; for (let k=0;k<=8;k+=2) gmax = Math.max(gmax, ground(path(qc-k), qc-k));
-  camY += (Math.max(gmax + 2.6, 5.4) - camY)*Math.min(1, dt*2.5 + (RM ? 1 : 0));
+  camY += (Math.max(gmax + 2.6, 5.4) + sp*5 - camY)*Math.min(1, dt*2.5 + (RM ? 1 : 0));
+  pu.uDim.value += (Math.min(.22, sp*.3) - pu.uDim.value)*(RM ? 1 : Math.min(1, dt*6));
   const pmx = ptr.inside ? ptr.nx : 0, pmy = ptr.inside ? ptr.ny : 0;
   cam.position.set(cx, camY + (1-ie)*16, CAMZ + (1-ie)*6);
   cam.up.set(0,1,0);
-  cam.lookAt(path(qc-10) + pmx*2.6, camY + (W < 860 ? 1.1 : -2.1) + pmy*.6 - (1-ie)*9, CAMZ-10);
+  cam.lookAt(path(qc-10) + pmx*2.6, camY + (W < 860 ? 0.1 : -2.1) + pmy*.6 - (1-ie)*9 - sp*4.5, CAMZ-10);
   cam.rotateZ((path(qc-7) - cx)*.05 - pmx*.07);
   cam.updateMatrixWorld();
   const sx = Math.round(cx/STEPX)*STEPX, rem = ((fly % STEPZ) + STEPZ) % STEPZ;
@@ -765,7 +804,7 @@ function frame(t){
     proj.set(tw.q.x, gy + 3.05, wz).project(cam);
     const dist = CAMZ - wz, lx = (proj.x*.5+.5)*W, ly = (-proj.y*.5+.5)*H;
     tw.g.visible = dist > 6.5 && (W < 860 || lx > W*.44);
-    const clearOfCopy = W < 860 ? ly > H*.62 && ly < H - 260 : lx > W*.5 && ly > 96 && !(lx > W - 480 && ly > H - 300);
+    const clearOfCopy = sp < .2 && (W < 860 ? ly > H*.55 && ly < H*.85 : lx > W*.54 && ly > 96 && !(lx > W - 470 && ly > H - 380));
     const show = proj.z < 1 && dist > 4 && dist < 40 && Math.abs(proj.x) < 1.05 && proj.y < .92 && clearOfCopy;
     if (tw.dirtyLbl){ tw.lbl.innerHTML = `<b>#${tw.rank}</b>${esc(tw.name)}<span class="x">${esc(tw.src)} · score ${tw.score.toFixed(2)}</span>`; tw.lbl.classList.toggle("top", tw.top); tw.dirtyLbl = false; }
     if (show){ tw.lbl.style.opacity = String(Math.min(1, (40-dist)/10, (dist-4)/3)*(W < 860 && !tw.top ? 0 : 1));
