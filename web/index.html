@@ -1,377 +1,819 @@
-<title>Axiom</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Axiom · The verified answer layer for agents</title>
+<meta name="description" content="Ask any question in plain language. Axiom routes it to the top independently ranked specialist on Telegraph, pays per call, and returns a cited answer with an on-chain receipt anyone can verify.">
+<meta property="og:title" content="Axiom · The verified answer layer for agents">
+<meta property="og:description" content="A plain language model guesses. Axiom returns a sourced answer with a receipt.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f6f2ea">
+<script>try{var m=localStorage.getItem("axmode");if(m==="dark"||m==="light")document.documentElement.setAttribute("data-mode",m);}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-}}
-</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&family=Red+Hat+Display:wght@400..800&display=swap">
 <style>
-  /* One full-screen WebGL world that ignites on load. The UI is a thin glass HUD that fades up after. */
-  :root {
-    --bg: #05070b;
-    --fg: #eaf0f8;
-    --muted: #8b97ac;
-    --faint: #586074;
-    --accent: #59d6ab;
-    --accent-deep: #1c6b56;
-    --bad: #e77a7a;
-    --glass: rgba(14,19,28,0.56);
-    --glass-line: rgba(120,140,170,0.16);
-    color-scheme: dark;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    background: var(--bg); color: var(--fg); overflow: hidden;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
-  .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
-    background: radial-gradient(130% 120% at 50% 42%, transparent 55%, rgba(0,0,0,0.5) 100%); }
-  .flash { position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
-    background: radial-gradient(60% 60% at 50% 48%, #d8fff2, #59d6ab 45%, transparent 75%); mix-blend-mode: screen; }
+/* Layout: a full-screen ASCII canyon flight toward a radiant sun (hero), then three side-by-side verified examples, how it works, a GitHub star band and a footer. Light paper by default, dark ink on toggle. */
+:root{
+  --bg:#f6f2ea; --paper:#fbf9f4; --ink:#1d2038; --dim:#5d6070; --faint:#8a8b95; --line:#1d203824; --a:#0e8a6a; --rust:#d0512f; --gold:#b8916a; --panel:#fbf9f4e8; --chip:#fffdf9;
+  --f-ui:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"Geist Mono",ui-monospace,Menlo,Consolas,monospace; --f-disp:"Red Hat Display","Geist",ui-sans-serif,system-ui,sans-serif;
+  color-scheme:light;
+}
+:root[data-mode="dark"]{ --bg:#05070b; --paper:#0a0d12; --ink:#eef1f0; --dim:#98a4ab; --faint:#6b767e; --line:#ffffff22; --a:#59d6ab; --rust:#e0573c; --gold:#c29a62; --panel:#0a0d12e6; --chip:#0d1117; color-scheme:dark }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55;margin:0;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.in{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+@media (max-width:480px){.in{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+a{color:var(--a)}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.eb{font:500 12.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--rust)}
+h1,h2,h3{font-family:var(--f-disp);font-weight:600;margin:0;text-wrap:balance}
+h1 em,h2 em{font-style:normal;color:var(--a)}
 
-  .hud { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
-    padding: max(20px, env(safe-area-inset-top,0px)) max(20px, env(safe-area-inset-right,0px)) max(20px, env(safe-area-inset-bottom,0px)) max(20px, env(safe-area-inset-left,0px));
-    display: grid; grid-template-rows: auto 1fr auto; gap: 14px; }
-  .hud a, .hud button, .hud input, .nodeTag { pointer-events: auto; }
+/* ---------- hero ---------- */
+.hero{position:relative;height:max(700px,100svh);overflow:hidden;background:var(--bg);user-select:none;-webkit-user-select:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;cursor:crosshair}
+.nogl #cv{display:none}
+.veil{position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 86%,transparent) 30%,transparent 56%),linear-gradient(180deg,var(--bg) 0%,transparent 15%)}
+.halo{position:absolute;left:69%;top:25%;width:46vmin;height:46vmin;pointer-events:none;transform:translate(-50%,-50%);z-index:1}
+.halo svg{width:100%;height:100%;overflow:visible;display:block}
+.spin{animation:spin 180s linear infinite}.spin-r{animation:spin 110s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+#labels{position:absolute;inset:0;pointer-events:none;z-index:2}
+.lbl{position:absolute;left:0;top:0;opacity:0;font:500 10.5px/1.35 var(--f-mono);letter-spacing:.06em;color:var(--ink);background:var(--chip);border:1px solid var(--line);padding:3px 7px;border-radius:7px;white-space:nowrap;will-change:transform}
+.lbl b{color:var(--rust);font-weight:600;margin-right:4px}
+.lbl.top{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 15%,transparent)}
+.lbl .x{display:none;color:var(--dim)} .lbl.on .x{display:block}
+.readout{position:absolute;left:0;top:0;z-index:2;font:500 10px var(--f-mono);letter-spacing:.08em;color:var(--rust);pointer-events:none;white-space:nowrap}
 
-  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
-  .mark { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: clamp(22px, 3.4vw, 30px);
-    letter-spacing: 0.34em; margin: 0; line-height: 1; }
-  .mark b { color: var(--accent); }
-  .sub { color: var(--muted); font-size: 12.5px; margin-top: 7px; max-width: 42ch; line-height: 1.45; }
-  .star { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; color: var(--fg);
-    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--glass-line); padding: 8px 13px; border-radius: 999px; font-size: 12.5px; white-space: nowrap; }
-  .star b { color: var(--accent); }
-  .star:hover { border-color: var(--accent-deep); }
+.nav{position:absolute;top:0;left:0;right:0;padding-block:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:5}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--f-disp);font-weight:600;font-size:23px;letter-spacing:.02em;color:var(--ink);text-decoration:none}
+.beta{font:500 10.5px var(--f-mono);letter-spacing:.14em;color:var(--dim);border:1px solid var(--line);padding:3px 7px;border-radius:6px}
+.links{display:flex;align-items:center;gap:24px;font-size:15px}
+.links>a.t{color:var(--ink);text-decoration:none}
+.links>a.t:hover{color:var(--a)}
+.iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--chip);display:grid;place-items:center;color:var(--ink);cursor:pointer;padding:0}
+.ghbtn{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font-weight:500;text-decoration:none;font-size:14px;white-space:nowrap}
+.ghbtn .st{color:var(--rust)}
+.hud{position:absolute;right:max(24px,env(safe-area-inset-right,0px));top:78px;z-index:3;font:500 10.5px var(--f-mono);letter-spacing:.14em;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
 
-  .mid { position: relative; }
-  .nodeTag { position: absolute; transform: translate(-50%,-50%); font-family: "IBM Plex Mono", monospace;
-    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
-    white-space: nowrap; transition: color .35s, opacity .35s; opacity: .8; text-shadow: 0 0 10px rgba(0,0,0,.6); }
-  .nodeTag.on { color: var(--accent); opacity: 1; }
-  .nodeTag.hub { color: var(--fg); letter-spacing: 0.28em; font-size: 11px; }
+.copy{position:absolute;left:0;top:52%;transform:translateY(-50%);width:min(640px,50%);display:grid;gap:18px;z-index:4;pointer-events:none}
+.copy>*{pointer-events:auto}
+.hero h1{font-size:clamp(40px,5.2vw,80px);line-height:.97;letter-spacing:-.045em}
+.lede{font-size:clamp(16px,1.3vw,19px);line-height:1.5;color:var(--dim);margin:0;max-width:44ch}
+.ask{background:var(--chip);border:1px solid var(--line);border-radius:18px;padding:16px 14px 12px 18px;display:grid;gap:14px;max-width:560px;box-shadow:0 22px 48px -30px #1d203855}
+.ask input{border:0;background:transparent;font:16.5px var(--f-ui);color:var(--ink);outline:none;width:100%;padding:0;min-width:0}
+.ask input::placeholder{color:var(--dim)}
+.ask:focus-within{border-color:color-mix(in srgb,var(--a) 60%,transparent)}
+.ask .row{display:flex;justify-content:flex-end;align-items:center;gap:10px}
+.pill{font:500 13px var(--f-ui);color:var(--a);border:1px solid color-mix(in srgb,var(--a) 50%,transparent);background:color-mix(in srgb,var(--a) 7%,transparent);padding:6px 11px;border-radius:9px;display:flex;gap:7px;align-items:center}
+.go{width:42px;height:42px;border-radius:50%;border:0;background:var(--rust);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.go:disabled{opacity:.55;cursor:default}
+.note{font:500 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);display:flex;gap:9px;align-items:center}
+.note i{width:6px;height:6px;border-radius:50%;background:var(--a);flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;max-width:600px}
+.chip{display:flex;align-items:center;gap:8px;font:14px var(--f-ui);color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer}
+.chip svg{color:var(--rust);flex:none}
+.chip:hover{border-color:color-mix(in srgb,var(--a) 55%,transparent)}
+.starline{font-size:13.5px;color:var(--dim);margin:0}
 
-  .bottom { display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 360px); gap: 14px; align-items: end; }
-  @media (max-width: 760px) { .bottom { grid-template-columns: 1fr; } }
+.term{position:absolute;right:max(24px,env(safe-area-inset-right,0px));bottom:26px;width:min(450px,38%);z-index:4;background:var(--panel);border:1px solid var(--line);border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:12.5px/1.65 var(--f-mono);box-shadow:0 22px 48px -30px #1d203866}
+.th{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.14em;color:var(--dim)}
+.th .dot{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 22%,transparent)}
+#tstat{margin-left:auto;color:var(--rust)}
+.tb{padding:12px 14px;min-height:10.2em;max-height:16em;overflow-y:auto;overflow-wrap:anywhere}
+.tb .d{color:var(--dim)} .tb .ok{color:var(--a)} .tb .rx{color:var(--rust)}
+.cur{display:inline-block;width:.55em;height:1.05em;background:var(--a);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ledger{display:flex;align-items:center;gap:7px;padding:10px 14px;border-top:1px solid var(--line);font-size:10px;letter-spacing:.14em;color:var(--dim);flex-wrap:wrap}
+.ledger .lt{margin-right:4px}
+.blk{width:22px;height:12px;border:1.2px solid var(--ink);display:block;transform:skewX(-14deg);opacity:.55}
+.blk.new{background:var(--a);border-color:var(--a);opacity:1}
 
-  .controls { display: flex; flex-direction: column; gap: 10px; align-self: end; }
-  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .chip { font: inherit; font-size: 12px; cursor: pointer; color: var(--fg);
-    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--glass-line); border-radius: 999px; padding: 7px 13px; transition: .2s; }
-  .chip:hover { border-color: var(--accent-deep); }
-  .chip.active { border-color: var(--accent); color: var(--accent); background: rgba(21,52,43,0.6); }
-  .tryrow { display: flex; gap: 7px; max-width: 460px; }
-  .tryrow input { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; color: var(--fg);
-    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--glass-line); border-radius: 10px; padding: 9px 12px; }
-  .tryrow input:focus { outline: none; border-color: var(--accent); }
-  .tryrow button { font: inherit; font-weight: 500; cursor: pointer; color: #061410; background: var(--accent);
-    border: 0; border-radius: 10px; padding: 9px 15px; }
-  .tryrow button:disabled { opacity: .5; }
-  .status { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); letter-spacing: 0.04em; }
+@media (max-width:860px){
+  .hero{height:max(860px,100svh)}
+  .veil{background:linear-gradient(180deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 90%,transparent) 50%,transparent 66%)}
+  .links>a.t,.hud{display:none}
+  .halo{left:50%;top:57%;width:40vmin;height:40vmin}
+  .copy{top:76px;transform:none;width:100%;gap:14px}
+  .lede{font-size:15px}
+  .term{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;bottom:16px}
+  .tb{min-height:8.8em;max-height:11em;font-size:11.5px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .chip{flex:none}
+}
+@media (max-width:480px){ .lede,.starline{display:none} .logo{font-size:20px} .ghbtn .gl{display:none} .hero h1{font-size:36px} }
 
-  .proof { background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-    border: 1px solid var(--glass-line); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 11px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
-  .q { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--fg); line-height: 1.5; word-break: break-word; }
-  .q::before { content: "? "; color: var(--accent); }
-  .two { display: grid; grid-template-columns: 1fr; gap: 9px; }
-  .slab { border-radius: 10px; padding: 10px 11px; border: 1px solid var(--glass-line); }
-  .slab.m { background: rgba(10,12,18,0.5); }
-  .slab.a { background: rgba(13,30,24,0.55); border-color: var(--accent-deep); }
-  .slab h4 { margin: 0 0 5px; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-  .slab.a h4 { color: var(--accent); }
-  .slab p { margin: 0; font-size: 12px; line-height: 1.45; }
-  .slab.m p { color: var(--muted); }
-  .no { margin-top: 7px; font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--bad); }
-  .rcpt { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
-  .rcpt .row { display: flex; gap: 7px; color: var(--muted); }
-  .rcpt .row span:first-child { color: var(--faint); min-width: 46px; }
-  .rcpt .row span:last-child { color: var(--fg); word-break: break-all; }
-  .verify { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-deep); width: fit-content; }
-  .verify:hover { border-color: var(--accent); }
-  .ok { color: var(--accent); }
+/* ---------- sections ---------- */
+.sec{max-width:1240px;margin:0 auto;padding-block:96px 24px;display:grid;gap:36px}
+.sec-head{display:grid;gap:14px;max-width:760px}
+.sec-head h2{font-size:clamp(32px,4vw,54px);line-height:1;letter-spacing:-.04em}
+.sec-head p{margin:0;color:var(--dim);font-size:17px;max-width:60ch}
+.cases{display:grid;gap:20px}
+.case{border:1px solid var(--line);border-radius:20px;background:var(--paper);overflow:hidden}
+.case>header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding:22px 24px 18px;border-bottom:1px solid var(--line)}
+.case .qwrap{display:grid;gap:8px;min-width:0;flex:1 1 420px}
+.tag{font:500 11.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--rust)}
+.case h3{font-size:clamp(20px,2.1vw,27px);line-height:1.15;letter-spacing:-.02em}
+.replay{font:500 13px var(--f-ui);color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.replay:hover{border-color:color-mix(in srgb,var(--a) 55%,transparent)}
+.vs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)}
+@media (max-width:760px){.vs{grid-template-columns:minmax(0,1fr)}}
+.plain,.axa{padding:22px 24px;display:grid;gap:14px;align-content:start;min-width:0}
+.plain{color:var(--dim);border-right:1px solid var(--line)}
+@media (max-width:760px){.plain{border-right:0;border-bottom:1px solid var(--line)}}
+.lab{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font:500 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.axa .lab{color:var(--ink)}
+.plain p,.axa p{margin:0;font-size:16px;line-height:1.55}
+.axa p{color:var(--ink)}
+.none{font:500 11.5px var(--f-mono);letter-spacing:.08em;color:var(--faint);display:flex;gap:8px;align-items:center}
+.none::before{content:"";width:9px;height:9px;border:1px dashed var(--faint);border-radius:50%}
+.badge{display:inline-flex;align-items:center;gap:6px;color:var(--a);border:1px solid color-mix(in srgb,var(--a) 45%,transparent);background:color-mix(in srgb,var(--a) 8%,transparent);padding:3px 8px;border-radius:7px;letter-spacing:.08em}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,auto));justify-content:start;gap:8px 28px;margin:0}
+@media (max-width:560px){.meta{grid-template-columns:minmax(0,1fr)}}
+.meta div{display:grid;gap:2px;min-width:0}
+.meta dt{font:500 10.5px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.meta dd{margin:0;font-size:14px;overflow-wrap:anywhere}
+.meta code{font:500 13px var(--f-mono)}
+.verify{justify-self:start;display:inline-flex;align-items:center;gap:8px;font:500 13.5px var(--f-ui);color:var(--a);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--a) 40%,transparent);padding-bottom:1px}
+.verify:hover{border-bottom-color:var(--a)}
+
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--line);gap:1px}
+@media (max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.steps{grid-template-columns:minmax(0,1fr)}}
+.step{background:var(--paper);padding:24px;display:grid;gap:10px;align-content:start;min-width:0}
+.step .n{font:500 11.5px var(--f-mono);letter-spacing:.12em;color:var(--rust)}
+.step h3{font-size:22px;letter-spacing:-.02em}
+.step p{margin:0;color:var(--dim)}
+.api{border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:18px 20px;font:13px/1.7 var(--f-mono);overflow-x:auto;color:var(--ink);white-space:pre;margin:0}
+.api .k{color:var(--rust)} .api .s{color:var(--a)} .api .c{color:var(--faint)}
+
+.starband{max-width:1240px;margin:0 auto;padding-block:72px 40px}
+.starcard{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:var(--paper);padding:40px clamp(24px,4vw,48px);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px}
+.starcard h2{font-size:clamp(30px,3.6vw,48px);letter-spacing:-.04em;line-height:1}
+.starcard p{margin:10px 0 0;color:var(--dim);max-width:52ch}
+.starcard .deco{position:absolute;right:-60px;top:-80px;width:280px;height:280px;opacity:.55;pointer-events:none}
+.ghbig{position:relative;display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 22px;border-radius:14px;background:var(--ink);color:var(--bg);text-decoration:none;font-weight:600;font-size:16px}
+.ghbig .st{color:var(--rust)}
+footer{max-width:1240px;margin:0 auto;padding-block:28px 48px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between;color:var(--dim);font-size:13.5px}
+footer nav{display:flex;flex-wrap:wrap;gap:20px}
+footer a{color:var(--ink);text-decoration:none} footer a:hover{color:var(--a)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.spin,.spin-r,.cur{animation:none}}
 </style>
 
-<canvas id="gl"></canvas>
-<div class="vignette"></div>
-<div class="flash" id="flash"></div>
+<section class="hero" id="hero">
+  <canvas id="cv" aria-hidden="true"></canvas>
+  <div class="halo" id="halo" aria-hidden="true"></div>
+  <div class="veil"></div>
+  <div id="labels" aria-hidden="true"></div>
+  <div class="readout" id="readout" hidden></div>
 
-<div class="hud" id="hud">
-  <div class="top">
-    <div>
-      <h1 class="mark">A<b>X</b>IOM</h1>
-      <p class="sub">The verified answer layer for agents. Any task routes to the top ranked specialist on Telegraph and returns a cited answer with a receipt anyone can verify.</p>
+  <header class="nav in">
+    <a class="logo" href="#hero" aria-label="Axiom home">
+      <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true"><circle r="11.5" fill="none" stroke="var(--gold)" stroke-width="1" stroke-dasharray="1 2"/><rect x="-5" y="-5" width="10" height="10" transform="rotate(45)" fill="none" stroke="var(--rust)" stroke-width="1.8"/><circle r="1.8" fill="var(--a)"/></svg>
+      AXIOM <span class="beta">BETA</span>
+    </a>
+    <nav class="links" aria-label="Main">
+      <a class="t" href="#examples">Examples</a>
+      <a class="t" href="#how">How it works</a>
+      <button class="iconbtn" id="mode" type="button" aria-label="Switch to dark mode">
+        <svg id="modeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+      </button>
+      <a class="ghbtn" href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener"><span class="st">★</span><span class="gl">Star on GitHub</span></a>
+    </nav>
+  </header>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+
+  <div class="copy in">
+    <div class="eb">One question. One ranked specialist. One receipt.</div>
+    <h1>Stop guessing. Get answers with <em>receipts.</em></h1>
+    <p class="lede">Axiom routes your question to the top independently ranked specialist on Telegraph, pays per call, and returns a cited answer with an on-chain receipt anyone can verify.</p>
+    <form class="ask" id="ask" autocomplete="off">
+      <label class="sr" for="q">Your question</label>
+      <input id="q" name="q" type="text" maxlength="500" placeholder="Ask anything, e.g. Is binance.com safe right now?">
+      <div class="row">
+        <span class="pill"><svg width="12" height="12" viewBox="-6 -6 12 12" aria-hidden="true"><rect x="-3.6" y="-3.6" width="7.2" height="7.2" transform="rotate(45)" fill="currentColor"/></svg>Verified ON</span>
+        <button class="go" id="go" type="submit" aria-label="Ask"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      </div>
+    </form>
+    <div class="note"><i></i>From 0.01 USD per answer · receipt included</div>
+    <div class="chips">
+      <button class="chip" type="button" data-ex="0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>Is Rosoboronexport sanctioned?</button>
+      <button class="chip" type="button" data-ex="1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>LEI of Citigold Corporation</button>
+      <button class="chip" type="button" data-ex="2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Is binance.com safe right now?</button>
     </div>
-    <a class="star" href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener">Star on GitHub <b>&#9733;</b></a>
+    <p class="starline">Useful for your agents? <a href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener">Star Axiom on GitHub</a>, it helps a lot.</p>
   </div>
 
-  <div class="mid" id="mid"></div>
+  <aside class="term" aria-label="Live run">
+    <div class="th"><span class="dot"></span>LIVE RUN<span id="tstat">ready</span></div>
+    <div class="tb" id="tb" aria-live="polite"></div>
+    <div class="ledger" id="ledger"><span class="lt">RECEIPTS</span></div>
+  </aside>
+</section>
 
-  <div class="bottom">
-    <div class="controls">
-      <div class="chips" id="chips"></div>
-      <div class="tryrow">
-        <input id="tryInput" placeholder="Ask your own: a company, a name to screen, a URL" autocomplete="off">
-        <button id="tryBtn">Ask</button>
-      </div>
-      <div class="status" id="status">select a question, watch it route</div>
-    </div>
-
-    <div class="proof">
-      <div class="q" id="q"></div>
-      <div class="two">
-        <div class="slab m">
-          <h4>Plain model</h4>
-          <p id="mAns"></p>
-          <div class="no">no source &middot; no receipt</div>
-        </div>
-        <div class="slab a">
-          <h4>Axiom &middot; <span id="aNode"></span></h4>
-          <p id="aAns"></p>
-          <div class="rcpt">
-            <div class="row"><span>source</span><span id="aSrc"></span></div>
-            <div class="row"><span>cost</span><span id="aCost"></span></div>
-            <div class="row"><span>receipt</span><span id="aRcpt"></span></div>
-            <div class="row"><span>status</span><span class="ok">verified on node</span></div>
-            <a class="verify" id="aVerify" target="_blank" rel="noopener">check the record yourself &rarr;</a>
-          </div>
-        </div>
-      </div>
-    </div>
+<section class="sec in" id="examples">
+  <div class="sec-head">
+    <div class="eb">Three real runs · receipts resolve on a public node</div>
+    <h2>A plain model guesses. <em>Axiom shows its receipt.</em></h2>
+    <p>The same three questions, asked of a plain language model and of Axiom. Every Axiom answer names its source and its cost, and carries a receipt anyone can check.</p>
   </div>
-</div>
+  <div class="cases">
+    <article class="case">
+      <header><div class="qwrap"><span class="tag">Sanctions check</span><h3>Is “Rosoboronexport” on the OFAC sanctions list?</h3></div><button class="replay" type="button" data-replay="0">Replay on the terrain ↑</button></header>
+      <div class="vs">
+        <div class="plain"><div class="lab">Plain model</div><p>“From general knowledge, Rosoboronexport is subject to US sanctions and has been placed on the OFAC SDN list. For the exact listing and date, consult the OFAC website.”</p><div class="none">No source, no receipt</div></div>
+        <div class="axa"><div class="lab">Axiom <span class="badge">◆ Verified on node</span></div>
+          <p>Listed. Rosoboronexport matches “JSC ROSOBORONEXPORT” on the EU consolidated list and the US OFAC list. Block the transaction and check the official notice.</p>
+          <dl class="meta"><div><dt>Source</dt><dd>US OFAC, EU consolidated</dd></div><div><dt>Cost</dt><dd>0.01 USD</dd></div><div><dt>Receipt</dt><dd><code title="0x3a37e0c6fdae14fa205d3f4bc543c94244fd2e0e6c10ddbe8323eec91900165e">0x3a37e0c6…1900165e</code></dd></div></dl>
+          <a class="verify" href="https://devnode.telegraphprotocol.com/engine/v1/signal/0xb0af9c9ce6999552ccc681212047da219cf51d64d844175a5b24cd0cb181d1ee" target="_blank" rel="noopener">Verify on node ↗</a>
+        </div>
+      </div>
+    </article>
+    <article class="case">
+      <header><div class="qwrap"><span class="tag">Company identity</span><h3>What is the exact LEI of Citigold Corporation Limited?</h3></div><button class="replay" type="button" data-replay="1">Replay on the terrain ↑</button></header>
+      <div class="vs">
+        <div class="plain"><div class="lab">Plain model</div><p>“I cannot provide the exact LEI of Citigold Corporation Limited from general knowledge, as this identifier requires a reliable data source to confirm.”</p><div class="none">No source, no receipt</div></div>
+        <div class="axa"><div class="lab">Axiom <span class="badge">◆ Verified on node</span></div>
+          <p>CITIGOLD CORPORATION LIMITED, headquartered in Fortitude Valley, AU. LEI 529900C4YHWJ2XJ8A350, jurisdiction AU, status ACTIVE.</p>
+          <dl class="meta"><div><dt>Source</dt><dd>Global LEI Index</dd></div><div><dt>Cost</dt><dd>0.01 USD</dd></div><div><dt>Receipt</dt><dd><code title="0x10d7b7b3b4054fa7da8b0beff49577e03668f6099ccac80a3d6c5031ab42609c">0x10d7b7b3…ab42609c</code></dd></div></dl>
+          <a class="verify" href="https://devnode.telegraphprotocol.com/engine/v1/signal/0xc004e0c5efa326e580eaa0fe6ad6907e3647ece199592c0fed52e640283b739d" target="_blank" rel="noopener">Verify on node ↗</a>
+        </div>
+      </div>
+    </article>
+    <article class="case">
+      <header><div class="qwrap"><span class="tag">URL safety</span><h3>Is https://binance.com safe to use right now?</h3></div><button class="replay" type="button" data-replay="2">Replay on the terrain ↑</button></header>
+      <div class="vs">
+        <div class="plain"><div class="lab">Plain model</div><p>“From general knowledge, Binance is one of the largest crypto exchanges and is generally considered safe, though it depends on regional regulations and your own account security.”</p><div class="none">No source, no receipt</div></div>
+        <div class="axa"><div class="lab">Axiom <span class="badge">◆ Verified on node</span></div>
+          <p>Safe within the checks performed. binance.com is absent from URLhaus, phishunt and the CERT Polska list and resolves over valid transport, as of 2026-11-23. Absence of a listing is not a guarantee.</p>
+          <dl class="meta"><div><dt>Source</dt><dd>URLhaus, phishunt, CERT Polska</dd></div><div><dt>Cost</dt><dd>0.01 USD</dd></div><div><dt>Receipt</dt><dd><code title="0x6c3c91d874332befba54ea3246c7dff95b25d36530ba408ac11ad5f77d78c8e2">0x6c3c91d8…7d78c8e2</code></dd></div></dl>
+          <a class="verify" href="https://devnode.telegraphprotocol.com/engine/v1/signal/0xc09b76f972f70c35ed6dbe022d01c0230a3dfd93aef44042f1a37e6e28061f9b" target="_blank" rel="noopener">Verify on node ↗</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
 
+<section class="sec in" id="how">
+  <div class="sec-head">
+    <div class="eb">How it works</div>
+    <h2>Ask, route, pay, <em>prove.</em></h2>
+    <p>One call from your agent. Axiom does the finding, the paying and the proving, and hands back an answer you can cite.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><span class="n">1 · ASK</span><h3>Plain language in</h3><p>Send any question as text. No provider to pick, no schema to learn.</p></div>
+    <div class="step"><span class="n">2 · ROUTE</span><h3>Top-ranked specialist</h3><p>Axiom picks the specialist ranked highest for that kind of question on the Telegraph protocol, by independent ranking.</p></div>
+    <div class="step"><span class="n">3 · PAY</span><h3>Per call, from 0.01 USD</h3><p>The specialist is paid for this one answer. No subscription, no key to manage on your side.</p></div>
+    <div class="step"><span class="n">4 · PROVE</span><h3>Cited answer, on-chain receipt</h3><p>You get the answer, its source and a receipt hash that resolves on a public node for anyone to verify.</p></div>
+  </div>
+<pre class="api" aria-label="Request and response shape"><span class="k">POST</span> /api/ask
+{ <span class="s">"task"</span>: "What is the exact LEI of Citigold Corporation Limited?" }
+
+<span class="c">→ 200</span>
+{ <span class="s">"answer"</span>: "…LEI 529900C4YHWJ2XJ8A350…", <span class="s">"specialist"</span>: "…", <span class="s">"source"</span>: "Global LEI Index",
+  <span class="s">"costUsd"</span>: 0.01, <span class="s">"receiptHash"</span>: "0x10d7b7b3…", <span class="s">"signalHash"</span>: "0xc004e0c5…", <span class="s">"verified"</span>: true }</pre>
+</section>
+
+<section class="starband in">
+  <div class="starcard">
+    <svg class="deco" viewBox="-100 -100 200 200" aria-hidden="true"><circle r="96" fill="none" stroke="var(--gold)" stroke-width=".4" stroke-dasharray=".4 2.4"/><circle r="88" fill="none" stroke="var(--gold)" stroke-width="2.4" stroke-dasharray=".22 1.8" opacity=".5"/><circle r="78" fill="none" stroke="var(--gold)" stroke-width=".4"/><rect x="-3" y="-3" width="6" height="6" transform="rotate(30) translate(0 -88) rotate(45)" fill="var(--rust)"/></svg>
+    <div><div class="eb">Open source</div><h2>Star Axiom on GitHub.</h2><p>If verified answers are useful for your agents, a star helps more builders find it. It takes one click.</p></div>
+    <a class="ghbig" href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener"><span class="st">★</span>Star on GitHub</a>
+  </div>
+</section>
+
+<footer class="in">
+  <span><b style="color:var(--ink);font-weight:600">AXIOM</b> · The verified answer layer for agents.</span>
+  <nav aria-label="Footer"><a href="#examples">Examples</a><a href="#how">How it works</a><a href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener">GitHub</a></nav>
+</footer>
+
+<!-- Interface: works without WebGL. Talks to the 3D layer through window events (ax:route, ax:arrive, ax:mode). -->
+<script>
+(function(){
+  "use strict";
+  var RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var VERIFY = "https://devnode.telegraphprotocol.com/engine/v1/signal/";
+  var ROUTE_S = 1.35, HOLD_S = 5.5;
+  var EX = [
+    { q:'Is "Rosoboronexport" on the OFAC sanctions list?', spec:"Sanctions screening",
+      a:'Listed. Rosoboronexport matches "JSC ROSOBORONEXPORT" on the EU consolidated list and the US OFAC list. Block the transaction and check the official notice.',
+      src:"US OFAC, EU consolidated", cost:0.01, h:"0x3a37e0c6fdae14fa205d3f4bc543c94244fd2e0e6c10ddbe8323eec91900165e", sig:"0xb0af9c9ce6999552ccc681212047da219cf51d64d844175a5b24cd0cb181d1ee", verified:true },
+    { q:"What is the exact LEI of Citigold Corporation Limited?", spec:"Company identity",
+      a:"CITIGOLD CORPORATION LIMITED, headquartered in Fortitude Valley, AU. LEI 529900C4YHWJ2XJ8A350, jurisdiction AU, status ACTIVE.",
+      src:"Global LEI Index", cost:0.01, h:"0x10d7b7b3b4054fa7da8b0beff49577e03668f6099ccac80a3d6c5031ab42609c", sig:"0xc004e0c5efa326e580eaa0fe6ad6907e3647ece199592c0fed52e640283b739d", verified:true },
+    { q:"Is https://binance.com safe to use right now?", spec:"URL safety",
+      a:"Safe within the checks performed. binance.com is absent from URLhaus, phishunt and the CERT Polska list and resolves over valid transport, as of 2026-11-23. Absence of a listing is not a guarantee.",
+      src:"URLhaus, phishunt, CERT Polska", cost:0.01, h:"0x6c3c91d874332befba54ea3246c7dff95b25d36530ba408ac11ad5f77d78c8e2", sig:"0xc09b76f972f70c35ed6dbe022d01c0230a3dfd93aef44042f1a37e6e28061f9b", verified:true }
+  ];
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]; }); }
+  function short(h){ h = String(h || ""); return h.length > 20 ? h.slice(0,10) + "…" + h.slice(-8) : h; }
+  function emit(n, d){ window.dispatchEvent(new CustomEvent(n, { detail:d })); }
+
+  /* mode */
+  var MOON = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
+  var SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  var root = document.documentElement, modeBtn = document.getElementById("mode");
+  function setMode(m){
+    root.setAttribute("data-mode", m);
+    modeBtn.setAttribute("aria-label", m === "light" ? "Switch to dark mode" : "Switch to light mode");
+    document.getElementById("modeIcon").innerHTML = m === "light" ? MOON : SUN;
+    var tc = document.querySelector('meta[name="theme-color"]'); if (tc) tc.setAttribute("content", m === "light" ? "#f6f2ea" : "#05070b");
+    try { localStorage.setItem("axmode", m); } catch(e) {}
+    emit("ax:mode", m);
+  }
+  modeBtn.addEventListener("click", function(){ setMode(root.getAttribute("data-mode") === "dark" ? "light" : "dark"); });
+  setMode(root.getAttribute("data-mode") === "dark" ? "dark" : "light");
+
+  /* halo */
+  function star(x,y,s){ return '<path transform="translate('+x+' '+y+') scale('+s+')" d="M0-5L.9-.9 5 0 .9.9 0 5-.9.9-5 0-.9-.9Z" fill="var(--gold)"/>'; }
+  function dia(deg,r,s,c){ return '<rect x="'+(-s/2)+'" y="'+(-s/2)+'" width="'+s+'" height="'+s+'" transform="rotate('+deg+') translate(0 '+(-r)+') rotate(45)" fill="'+c+'"/>'; }
+  document.getElementById("halo").innerHTML = '<svg viewBox="-100 -100 200 200">' +
+    '<g class="spin"><circle r="97" fill="none" stroke="var(--gold)" stroke-width=".3" stroke-dasharray=".35 2.4" stroke-linecap="round"/>' +
+    '<circle r="92" fill="none" stroke="var(--gold)" stroke-width="2.6" stroke-dasharray=".2 1.7" opacity=".5"/>' + dia(28,92,3.4,"var(--rust)") + dia(206,92,2.4,"var(--rust)") + '</g>' +
+    '<circle r="86.5" fill="none" stroke="var(--gold)" stroke-width=".3" opacity=".8"/>' +
+    '<g class="spin-r"><circle r="80" fill="none" stroke="var(--gold)" stroke-width=".5" stroke-dasharray=".2 1.3" stroke-linecap="round"/>' + dia(118,80,2.6,"var(--rust)") + dia(296,80,1.8,"var(--gold)") + '</g>' +
+    '<path d="M-52 120V-20A52 52 0 0 1 52-20V120" fill="none" stroke="var(--gold)" stroke-width=".5" opacity=".85"/>' +
+    '<path d="M-47.5 120V-20A47.5 47.5 0 0 1 47.5-20V120" fill="none" stroke="var(--gold)" stroke-width=".25" stroke-dasharray=".3 1.3"/>' +
+    star(0,-110,1.15) + star(-76,-74,.9) + star(78,-70,.9) + star(-96,36,.6) + star(94,42,.6) + '</svg>';
+
+  /* terminal and queries */
+  var tb = document.getElementById("tb"), tstat = document.getElementById("tstat"), ledger = document.getElementById("ledger");
+  var Q = null, exNext = 0, lastInput = performance.now(), idleRun = 0, heroVisible = true;
+  function render(){
+    if (!Q){ tb.innerHTML = '<span class="d">Ask a question, tap an example, or just watch.</span><span class="cur"></span>'; tstat.textContent = "ready"; return; }
+    var d = Q.d, h = Q.note ? '<span class="d">' + esc(Q.note) + '</span><br>' : "";
+    h += '<span class="rx">&gt; ask</span> ' + esc(d.q.slice(0, Q.typed)) + (Q.phase === 0 ? '<span class="cur"></span>' : "");
+    if (Q.phase >= 1) h += '<br><span class="d">→ routed to ' + esc(d.spec) + ' · rank #1 · paid ' + Number(d.cost).toFixed(2) + ' USD</span>';
+    if (Q.phase >= 2){
+      h += '<br><span class="ok">✓</span> ' + esc(d.a) + '<br><span class="d">source</span> ' + esc(d.src);
+      if (d.h) h += '<br><span class="d">receipt</span> ' + esc(short(d.h)) + ' ' + (d.verified === false ? '<span class="rx">not yet verified</span>' : '<span class="ok">◆ verified on node</span>');
+      if (d.sig) h += ' · <a href="' + VERIFY + encodeURIComponent(d.sig) + '" target="_blank" rel="noopener">verify ↗</a>';
+    }
+    tb.innerHTML = h;
+    tstat.textContent = ["asking","routing","verified","verified"][Q.phase] || "";
+  }
+  function addLedger(d){
+    if (!d.h) return;
+    var olds = ledger.querySelectorAll(".blk.new"); for (var i=0;i<olds.length;i++) olds[i].classList.remove("new");
+    var a = document.createElement(d.sig ? "a" : "span"); a.className = "blk new";
+    if (d.sig){ a.href = VERIFY + encodeURIComponent(d.sig); a.target = "_blank"; a.rel = "noopener"; }
+    a.title = d.spec + " · " + d.h; a.setAttribute("aria-label", "Receipt " + short(d.h));
+    ledger.appendChild(a);
+    var all = ledger.querySelectorAll(".blk"); if (all.length > 9) all[0].remove();
+  }
+  function runQuery(d, note){
+    if (Q && Q.phase < 2) return false;
+    Q = { d:d, phase:0, pt:0, typed: RM ? d.q.length : 0, note:note };
+    if (RM){ Q.phase = 2; emit("ax:route", d); emit("ax:arrive", d); addLedger(d); }
+    render(); return true;
+  }
+  var last = performance.now();
+  function tick(t){
+    requestAnimationFrame(tick);
+    var dt = Math.min(.1, (t-last)/1000); last = t;
+    if (document.hidden) return;
+    if (Q && !RM){
+      Q.pt += dt; var d = Q.d;
+      if (Q.phase === 0){ var n = Math.min(d.q.length, Math.floor(Q.pt*42)); if (n !== Q.typed){ Q.typed = n; render(); }
+        if (Q.typed >= d.q.length && Q.pt > d.q.length/42 + .35){ Q.phase = 1; Q.pt = 0; emit("ax:route", d); render(); } }
+      else if (Q.phase === 1 && Q.pt > ROUTE_S){ Q.phase = 2; Q.pt = 0; emit("ax:arrive", d); addLedger(d); render(); }
+      else if (Q.phase === 2 && Q.pt > HOLD_S){ Q.phase = 3; }
+    }
+    if (!RM && heroVisible && window.AXFX_READY !== false && (t - lastInput)/1000 > 7 && (!Q || Q.phase >= 3) && t - idleRun > 9000){ idleRun = t; runQuery(EX[exNext++ % 3]); }
+  }
+  requestAnimationFrame(tick);
+  var hero = document.getElementById("hero");
+  ["pointermove","pointerdown","keydown"].forEach(function(ev){ hero.addEventListener(ev, function(){ lastInput = performance.now(); }, { passive:true }); });
+  if ("IntersectionObserver" in window) new IntersectionObserver(function(es){ heroVisible = es[0].isIntersecting; }).observe(hero);
+
+  var chips = document.querySelectorAll("[data-ex]");
+  for (var i=0;i<chips.length;i++) chips[i].addEventListener("click", function(){ lastInput = performance.now(); runQuery(EX[+this.getAttribute("data-ex")]); });
+  var replays = document.querySelectorAll("[data-replay]");
+  for (var j=0;j<replays.length;j++) replays[j].addEventListener("click", function(){
+    var k = +this.getAttribute("data-replay"); lastInput = performance.now();
+    hero.scrollIntoView({ behavior: RM ? "auto" : "smooth" });
+    setTimeout(function(){ if (Q && Q.phase < 2) Q.phase = 3; runQuery(EX[k]); }, RM ? 0 : 650);
+  });
+
+  function closest(text){ var s = text.toLowerCase();
+    if (/ofac|sanction|rosoboron|sdn|embargo/.test(s)) return 0;
+    if (/\blei\b|company|corporation|limited|\bltd\b|identity|citigold|registr/.test(s)) return 1;
+    if (/https?:|url|safe|phish|domain|\.com|website|site/.test(s)) return 2;
+    return exNext++ % 3; }
+  var form = document.getElementById("ask"), qIn = document.getElementById("q"), go = document.getElementById("go");
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var text = qIn.value.trim(); if (!text || (Q && Q.phase < 2)) return;
+    lastInput = performance.now(); go.disabled = true; Q = null; tstat.textContent = "asking";
+    tb.innerHTML = '<span class="rx">&gt; ask</span> ' + esc(text) + '<br><span class="d">routing to the top-ranked specialist…</span><span class="cur"></span>';
+    var ctl = ("AbortController" in window) ? new AbortController() : null;
+    var to = setTimeout(function(){ if (ctl) ctl.abort(); }, 45000);
+    fetch("/api/ask", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ task:text }), signal: ctl ? ctl.signal : undefined })
+      .then(function(res){ if (!res.ok) throw new Error("status " + res.status); return res.json(); })
+      .then(function(j){
+        if (!j || typeof j.answer !== "string" || !j.answer) throw new Error("empty answer");
+        runQuery({ q:text, spec: j.specialist || "Specialist", a: j.answer, src: j.source || "cited source",
+          cost: typeof j.costUsd === "number" ? j.costUsd : 0.01, h: j.receiptHash || "", sig: j.signalHash || "", verified: j.verified !== false });
+      })
+      .catch(function(){
+        runQuery(EX[closest(text)], "Live answers aren't reachable right now. The three examples are real verified runs; replaying the closest one.");
+      })
+      .then(function(){ clearTimeout(to); go.disabled = false; });
+  });
+  render();
+})();
+</script>
+
+<!-- 3D layer: ASCII terrain, sun, receipt towers, routing arcs. Optional; the page works without it. -->
 <script type="module">
-import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+THREE.ColorManagement.enabled = false;
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hero = document.getElementById("hero"), canvas = document.getElementById("cv");
+let r = null;
+try { r = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:"high-performance" }); if (!r.capabilities.isWebGL2) throw new Error("webgl2"); }
+catch(e){ r = null; hero.classList.add("nogl"); }
+if (r) start();
 
-const NODE_URL = "https://devnode.telegraphprotocol.com/engine/v1/signal/";
-const EXAMPLES = [
-  { id:"sanctions", node:"SANCTIONS", label:"Sanctions check",
-    q:'Is "Rosoboronexport" on the OFAC sanctions list?',
-    model:"From general knowledge, Rosoboronexport is subject to US sanctions and has been placed on the OFAC SDN list. For the exact listing and date, consult the OFAC website.",
-    axiom:'Listed. Rosoboronexport matches "JSC ROSOBORONEXPORT" on the EU consolidated list and the US OFAC list. Block the transaction and check the official notice.',
-    source:"US OFAC, EU consolidated", cost:"0.01 USD",
-    receipt:"0x3a37e0c6fdae14fa205d3f4bc543c94244fd2e0e6c10ddbe8323eec91900165e",
-    signal:"0xb0af9c9ce6999552ccc681212047da219cf51d64d844175a5b24cd0cb181d1ee" },
-  { id:"identity", node:"IDENTITY", label:"Company identity",
-    q:"What is the exact LEI of Citigold Corporation Limited?",
-    model:"I cannot provide the exact LEI of Citigold Corporation Limited from general knowledge, as this identifier requires a reliable data source to confirm.",
-    axiom:"CITIGOLD CORPORATION LIMITED, headquartered in Fortitude Valley, AU. LEI 529900C4YHWJ2XJ8A350, jurisdiction AU, status ACTIVE.",
-    source:"Global LEI Index", cost:"0.01 USD",
-    receipt:"0x10d7b7b3b4054fa7da8b0beff49577e03668f6099ccac80a3d6c5031ab42609c",
-    signal:"0xc004e0c5efa326e580eaa0fe6ad6907e3647ece199592c0fed52e640283b739d" },
-  { id:"url", node:"URL SAFETY", label:"URL safety",
-    q:"Is https://binance.com safe to use right now?",
-    model:"From general knowledge, Binance is one of the largest crypto exchanges and is generally considered safe, though it depends on regional regulations and your own account security.",
-    axiom:"Safe within the checks performed. binance.com is absent from URLhaus, phishunt and the CERT Polska list and resolves over valid transport, as of 2026-11-23. Absence of a listing is not a guarantee.",
-    source:"URLhaus, phishunt, CERT Polska", cost:"0.01 USD",
-    receipt:"0x6c3c91d874332befba54ea3246c7dff95b25d36530ba408ac11ad5f77d78c8e2",
-    signal:"0xc09b76f972f70c35ed6dbe022d01c0230a3dfd93aef44042f1a37e6e28061f9b" }
-];
-const SHORT = h => h.slice(0,10) + "..." + h.slice(-8);
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const ACCENT = new THREE.Color(0x59d6ab);
+function start(){
+window.AXFX_READY = false;
+const POOL = [["FX rates","central bank feeds"],["Chain state","public RPC nodes"],["Court records","public dockets"],["Patents","patent office records"],["Shipping","AIS positions"],["Weather","national met services"],["Domains","WHOIS and RDAP"],["Securities","exchange filings"],["Grants","public registries"],["Flights","ADS-B feeds"]];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const MODES = {
+  light:{ bg:"#f6f2ea", a:"#0e8a6a", b:"#d0512f", c:"#1d2038", g:"#b8916a", light:1 },
+  dark: { bg:"#05070b", a:"#59d6ab", b:"#e0573c", c:"#eef1f0", g:"#c29a62", light:0 },
+};
+const P = { bg:new THREE.Color(), a:new THREE.Color(), b:new THREE.Color(), c:new THREE.Color(), g:new THREE.Color(), light:{ value:1 } };
+let dirty = true;
+function setColors(m){ const p = MODES[m] || MODES.light; for (const k of ["bg","a","b","c","g"]) P[k].set(p[k]); P.light.value = p.light; dirty = true; }
+setColors(document.documentElement.getAttribute("data-mode") === "dark" ? "dark" : "light");
+addEventListener("ax:mode", e => setColors(e.detail));
 
-const canvas = document.getElementById("gl");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:"high-performance" });
-renderer.setClearColor(0x04050a, 1);
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
-camera.position.set(0, 0.2, 9.2);
+/* terrain function: GLSL and JS versions must stay identical */
+const WATER = -2.05;
+const TERR = `
+const float WATER = ${WATER.toFixed(2)};
+uint hu(ivec2 i){ uint h = uint(i.x)*1597334677u ^ uint(i.y)*3812015801u; h = (h ^ (h>>16u))*2246822519u; h ^= h>>13u; return h; }
+float hs(vec2 p){ return float(hu(ivec2(p)))/4294967295.; }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
+  float a = hs(i), b = hs(i+vec2(1.,0.)), c = hs(i+vec2(0.,1.)), d = hs(i+vec2(1.,1.));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }
+float fbm(vec2 p){ float v = 0., a = .5; for (int k=0;k<5;k++){ v += a*noise(p); p = p*2.03 + vec2(1.7,9.2); a *= .5; } return v; }
+float path(float z){ return sin(z*.11)*3.2 + sin(z*.037)*4.; }
+float terrain(vec2 q){
+  float base = fbm(q*.13);
+  float rn = noise(q*.3 + vec2(5.2,1.3)); float ridge = 1. - abs(rn*2.-1.); ridge *= ridge;
+  float h = base*4.6 + ridge*2.4*smoothstep(.3,.75,base) - 2.3;
+  float vd = abs(q.x - path(q.y));
+  h = mix(h - 1.6, h + .3, smoothstep(1.2, 7.5, vd));
+  return h;
+}`;
+const hu = (x,y) => { let h = (Math.imul(x,1597334677) ^ Math.imul(y,3812015801)) >>> 0; h = Math.imul((h ^ (h>>>16)) | 0, 2246822519) >>> 0; return (h ^ (h>>>13)) >>> 0; };
+const hs = (x,y) => hu(x,y)/4294967295;
+const sst = (a,b,x) => { const t = Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
+function noise(x,y){ const ix = Math.floor(x), iy = Math.floor(y); let fx = x-ix, fy = y-iy; fx = fx*fx*(3-2*fx); fy = fy*fy*(3-2*fy);
+  const a = hs(ix,iy), b = hs(ix+1,iy), c = hs(ix,iy+1), d = hs(ix+1,iy+1); const top = a+(b-a)*fx, bot = c+(d-c)*fx; return top+(bot-top)*fy; }
+function fbm(x,y){ let v = 0, a = .5; for (let k=0;k<5;k++){ v += a*noise(x,y); x = x*2.03+1.7; y = y*2.03+9.2; a *= .5; } return v; }
+const path = z => Math.sin(z*.11)*3.2 + Math.sin(z*.037)*4;
+function terrain(x,y){ const base = fbm(x*.13,y*.13); const rn = noise(x*.3+5.2,y*.3+1.3); let ridge = 1-Math.abs(rn*2-1); ridge *= ridge;
+  let h = base*4.6 + ridge*2.4*sst(.3,.75,base) - 2.3; const vd = Math.abs(x-path(y)); const t = sst(1.2,7.5,vd); return (h-1.6)+((h+.3)-(h-1.6))*t; }
+const ground = (x,y) => Math.max(WATER, terrain(x,y));
 
-/* fbm nebula background, kept dark so bloom ignores it */
-const bgU = { uTime:{value:0}, uRes:{value:new THREE.Vector2(1,1)}, uReveal:{value:0} };
-const bg = new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial({
-  uniforms: bgU, depthWrite:false, depthTest:false,
-  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.999,1.0); }`,
-  fragmentShader:`precision highp float; varying vec2 vUv; uniform float uTime; uniform vec2 uRes; uniform float uReveal;
-    float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
-    float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
-      vec2 u=f*f*(3.-2.*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
-    float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=.5; } return v; }
-    void main(){ vec2 uv=vUv; vec2 p=(uv-.5)*vec2(uRes.x/uRes.y,1.)*2.3; float t=uTime*0.025;
-      float f=fbm(p*1.4 + vec2(t,-t*0.6) + fbm(p*0.7 - t)*0.7);
-      vec3 deep=vec3(0.014,0.022,0.038), teal=vec3(0.02,0.10,0.095);
-      vec3 col=mix(deep,teal,smoothstep(0.32,0.92,f));
-      float w=smoothstep(0.58,0.80,fbm(p*2.1+vec2(-t*1.3,t))); col+=vec3(0.02,0.13,0.10)*w*0.5;
-      col*=smoothstep(1.45,0.25,length(uv-.5)*1.7);
-      gl_FragColor=vec4(col*uReveal,1.0); }`
-}));
-bg.frustumCulled=false; scene.add(bg);
+r.outputColorSpace = THREE.LinearSRGBColorSpace; r.autoClear = false;
+const narrowStart = innerWidth < 860;
+r.setPixelRatio(Math.min(devicePixelRatio, narrowStart ? 1.5 : 1.75));
+const cam = new THREE.PerspectiveCamera(52, 1, .1, 120);
+const CAMZ = 8;
 
-/* Axiom core, fresnel rim, reveals after the detonation */
-const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.95, 3), new THREE.ShaderMaterial({
-  uniforms:{ uTime:{value:0}, uColor:{value:ACCENT.clone()}, uReveal:{value:0} }, transparent:true,
-  vertexShader:`varying vec3 vN; varying vec3 vV; uniform float uTime;
-    void main(){ vec3 pos=position; float d=sin(pos.y*5.0+uTime*1.3)*0.012+sin(pos.x*7.0-uTime)*0.010; pos+=normal*d;
-      vec4 mv=modelViewMatrix*vec4(pos,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
-  fragmentShader:`varying vec3 vN; varying vec3 vV; uniform vec3 uColor; uniform float uReveal;
-    void main(){ float fr=pow(1.0-max(dot(vN,vV),0.0),2.4); vec3 c=vec3(0.02,0.05,0.06)+uColor*fr*2.3;
-      float a=(0.22+fr*0.95)*uReveal; gl_FragColor=vec4(c,a); }`
-}));
-scene.add(core);
-const wire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5,1),
-  new THREE.MeshBasicMaterial({ color:0x2b3a4e, wireframe:true, transparent:true, opacity:0 }));
-scene.add(wire);
+/* terrain, rendered to a target then turned into glyphs */
+const tScene = new THREE.Scene();
+const TW = 60, TD = 66, SX = narrowStart ? 120 : 180, SZ = narrowStart ? 150 : 210;
+const tGeo = new THREE.PlaneGeometry(TW, TD, SX, SZ); tGeo.rotateX(-Math.PI/2);
+const STEPX = TW/SX, STEPZ = TD/SZ;
+const tu = { uFly:{value:0}, uTime:{value:0}, uMouseQ:{value:new THREE.Vector2(0,-999)}, uLift:{value:0},
+  uW1Q:{value:new THREE.Vector2()}, uW1T:{value:-1}, uW2Q:{value:new THREE.Vector2()}, uW2T:{value:-1} };
+const TVERT = `${TERR}
+  uniform float uFly, uLift, uW1T, uW2T; uniform vec2 uMouseQ, uW1Q, uW2Q;
+  varying vec3 vN, vW; varying float vH, vWater;
+  float wave(vec2 q, vec2 c, float t){ if (t < 0.) return 0.; float d = distance(q,c), rr = t*9.; return sin((d-rr)*1.5)*exp(-pow(d-rr,2.)*.3)*1.2*smoothstep(2.8,0.,t); }
+  vec2 fullH(vec2 q){ float dm = distance(q,uMouseQ); float raw = terrain(q) + exp(-dm*dm*.16)*2.6*uLift;
+    float h = max(raw, WATER) + wave(q,uW1Q,uW1T) + wave(q,uW2Q,uW2T); return vec2(h, step(raw, WATER)); }
+  void main(){
+    vec4 w = modelMatrix*vec4(position,1.);
+    vec2 q = vec2(w.x, w.z - uFly);
+    float e = .2;
+    vec2 H = fullH(q); float hx = fullH(q+vec2(e,0.)).x, hz = fullH(q+vec2(0.,e)).x;
+    vN = normalize(vec3(H.x-hx, e, H.x-hz));
+    w.y = H.x; vH = H.x; vWater = H.y; vW = w.xyz;
+    gl_Position = projectionMatrix*viewMatrix*w;
+  }`;
+const tMat = new THREE.ShaderMaterial({ uniforms:tu, vertexShader:TVERT, fragmentShader:`
+  uniform float uTime; varying vec3 vN, vW; varying float vH, vWater;
+  void main(){
+    vec3 n = normalize(vN), V = normalize(cameraPosition - vW), L = normalize(vec3(.28,.42,-1.));
+    float lit = max(dot(n,L),0.), hemi = .5+.5*n.y, rim = pow(1.-max(dot(n,V),0.),3.);
+    float ao = smoothstep(-3.2, 2.2, vH);
+    float lum = (.1*hemi + .8*pow(lit,.85) + .55*rim*lit + .03) * (.45+.55*ao);
+    lum = smoothstep(.04, .95, lum);
+    float dist = length(vW - cameraPosition);
+    float fog = smoothstep(11., 46., dist);
+    float flag = .75;
+    float cl = abs(fract(vH*1.4) - .5);
+    if (cl > .44 && dist < 30.) flag = 1.;
+    if (vWater > .5){ flag = .5; lum = .45 + .3*sin(vW.x*2.4 + uTime*1.6)*sin(vW.z*1.7 - uTime*1.1); }
+    gl_FragColor = vec4(clamp(lum,0.,1.), clamp((vH+2.4)/7.5,0.,1.), fog, flag);
+  }` });
+const tMesh = new THREE.Mesh(tGeo, tMat); tMesh.frustumCulled = false; tScene.add(tMesh);
+const dScene = new THREE.Scene();
+const dMesh = new THREE.Mesh(tGeo, new THREE.ShaderMaterial({ uniforms:tu, vertexShader:TVERT, fragmentShader:`void main(){ gl_FragColor = vec4(0.); }`, colorWrite:false }));
+dMesh.frustumCulled = false; dScene.add(dMesh);
 
-/* specialist nodes, reveal after the detonation */
-const RING = [
-  { ex:EXAMPLES[0], ang:-0.25 }, { ex:EXAMPLES[1], ang:1.35 }, { ex:EXAMPLES[2], ang:2.95 },
-  { ex:null, ang:4.15 }, { ex:null, ang:5.05 }, { ex:null, ang:5.85 }
-];
-const R=3.9, nodes=[];
-RING.forEach((slot,i)=>{
-  const x=Math.cos(slot.ang)*R, y=Math.sin(slot.ang)*R*0.6, z=(i%2?0.7:-0.7);
-  const real=!!slot.ex;
-  const m=new THREE.Mesh(new THREE.SphereGeometry(real?0.3:0.15, 24,24),
-    new THREE.MeshBasicMaterial({ color: real?0x6fe3c0:0x2b3647, transparent:true, opacity:0 }));
-  m.position.set(x,y,z); scene.add(m);
-  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),m.position.clone()]),
-    new THREE.LineBasicMaterial({ color:0x2b3647, transparent:true, opacity:0 }));
-  scene.add(line);
-  const pulse=new THREE.Mesh(new THREE.SphereGeometry(0.11,12,12), new THREE.MeshBasicMaterial({ color:ACCENT }));
-  pulse.visible=false; scene.add(pulse);
-  let tag=null;
-  if(real){ tag=document.createElement("div"); tag.className="nodeTag"; tag.textContent=slot.ex.node; tag.style.opacity=0;
-    document.getElementById("mid").appendChild(tag); }
-  nodes.push({ ...slot, m, line, pulse, base:m.position.clone(), real, tag });
-});
+/* glyph atlas */
+const GL = [" ",".",":","-","=","+","*","#","%","@","-","/","|","\\","~","·"];
+const gc = document.createElement("canvas"); gc.width = 1024; gc.height = 64; const gx = gc.getContext("2d");
+const drawGlyphs = () => { gx.fillStyle = "#000"; gx.fillRect(0,0,1024,64); gx.fillStyle = "#fff"; gx.font = '600 50px "Geist Mono", ui-monospace, monospace';
+  gx.textAlign = "center"; gx.textBaseline = "middle"; GL.forEach((c,i) => gx.fillText(c, i*64+32, 35)); };
+drawGlyphs();
+const gTex = new THREE.CanvasTexture(gc); gTex.minFilter = THREE.LinearFilter; gTex.generateMipmaps = false;
+document.fonts && document.fonts.ready.then(() => { drawGlyphs(); gTex.needsUpdate = true; dirty = true; });
 
-/* ignition particles: detonate from center, then collapse into an ambient field */
-const PN = 6500;
-const pos = new Float32Array(PN*3), home = new Float32Array(PN*3), vel = new Float32Array(PN*3);
-for(let i=0;i<PN;i++){
-  // home: a wide ambient starfield, kept off the center so the core stays the centerpiece
-  const rad = 7 + Math.random()*16, u=Math.random()*6.28, v=Math.acos(2*Math.random()-1);
-  home[i*3]   = Math.sin(v)*Math.cos(u)*rad;
-  home[i*3+1] = Math.sin(v)*Math.sin(u)*rad*0.7;
-  home[i*3+2] = -2 + Math.cos(v)*rad - Math.random()*6;
-  const su=Math.random()*6.28, sv=Math.acos(2*Math.random()-1), sp=1.0+Math.random()*2.6;
-  vel[i*3]=Math.sin(sv)*Math.cos(su)*sp; vel[i*3+1]=Math.sin(sv)*Math.sin(su)*sp; vel[i*3+2]=Math.cos(sv)*sp;
-  pos[i*3]=pos[i*3+1]=pos[i*3+2]=0;
+const rt = new THREE.WebGLRenderTarget(1,1,{ type:THREE.HalfFloatType });
+const pu = { tDiffuse:{value:rt.texture}, tGlyph:{value:gTex}, uRes:{value:new THREE.Vector2()}, uCell:{value:9},
+  uBg:{value:P.bg}, uA:{value:P.a}, uB:{value:P.b}, uC:{value:P.c}, uG:{value:P.g}, uLight:P.light,
+  uSun:{value:new THREE.Vector2()}, uSunR:{value:80}, uPulse:{value:0}, uMouse:{value:new THREE.Vector2(-999,-999)}, uScan:{value:0}, uTime:{value:0} };
+const pScene = new THREE.Scene(), pCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+pScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial({ uniforms:pu, depthTest:false, depthWrite:false,
+  vertexShader:`void main(){ gl_Position = vec4(position.xy,0.,1.); }`,
+  fragmentShader:`
+  uniform sampler2D tDiffuse, tGlyph; uniform vec2 uRes, uSun, uMouse; uniform float uCell, uLight, uSunR, uPulse, uScan, uTime;
+  uniform vec3 uBg, uA, uB, uC, uG;
+  float n21(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
+  void main(){
+    vec2 fc = gl_FragCoord.xy;
+    vec2 cell = floor(fc/uCell), cc = (cell+.5)*uCell;
+    vec4 s = texture2D(tDiffuse, cc/uRes);
+    vec2 f = fract(fc/uCell); f.x = f.x*.62 + .19;
+    float idx = -1., amt = 1.; vec3 col = uC;
+    bool sky = s.a < .25;
+    vec2 ox = vec2(uCell, 0.), oy = vec2(0., uCell);
+    vec4 sl = texture2D(tDiffuse, (cc-ox)/uRes), sr = texture2D(tDiffuse, (cc+ox)/uRes), sd = texture2D(tDiffuse, (cc-oy)/uRes), su = texture2D(tDiffuse, (cc+oy)/uRes);
+    float dl = sl.a < .25 ? 1.3 : sl.b, dr = sr.a < .25 ? 1.3 : sr.b, dd = sd.a < .25 ? 1.3 : sd.b, du = su.a < .25 ? 1.3 : su.b;
+    vec2 gd = vec2(dr - dl, du - dd);
+    vec2 gl = vec2(sr.r - sl.r, su.r - sd.r);
+    float edgeD = length(gd), edgeL = length(gl);
+    if (!sky){
+      float fog = s.b;
+      float dens = uLight > .5 ? pow(1. - s.r, 2.)*.8 : pow(s.r, .8)*1.05;
+      dens = clamp(dens*(1. - fog), 0., .999);
+      idx = min(floor(dens*10.), uLight > .5 ? 6. : 8.);
+      col = mix(uA, uB, smoothstep(.22, .62, s.g));
+      col = mix(col, uC, smoothstep(.42, .86, dens));
+      if (s.a < .6){ idx = s.r > .5 ? 14. : (n21(cell) > .55 ? 15. : 0.); col = uA; }
+      else if (s.a > .9 && fog < .55){ idx = 15.; col = uB; }
+      amt = 1. - fog*.5;
+      vec2 gg = edgeD > .045 ? gd : gl;
+      if ((edgeD > .045 || edgeL > .42) && s.a > .6){
+        float ea = mod(atan(gg.y, gg.x) + 1.5707963 + 3.14159265/8., 3.14159265);
+        idx = 10. + mod(floor(ea/(3.14159265/4.)), 4.);
+        col = edgeD > .045 ? uC : mix(uC, uB, .5);
+        amt = 1. - fog*.35;
+      }
+      float dm = length(cc - uMouse);
+      if (uScan > .01){
+        float R = 74.*uCell/9.;
+        if (dm < R){ col = mix(col, uA, uScan); idx = max(idx, 2.); }
+        if (abs(dm - R) < uCell*.55){ idx = 15.; col = uB; amt = uScan; }
+      }
+    }
+    if (sky || s.b > .82){
+      vec2 d = cc - uSun; float pr = length(d), rr = pr/uSunR, ang = atan(d.y, d.x);
+      float P = 6.2831853/28.;
+      float ra = floor(ang/P + .5)*P, perp = pr*abs(sin(ang - ra));
+      float P2 = 6.2831853/56.;
+      float ra2 = floor(ang/P2 + .5)*P2, perp2 = pr*abs(sin(ang - ra2));
+      float len1 = 2.5 + uPulse*.9;
+      if (rr < .44){ idx = rr < .3 ? 9. : 7.; col = mix(uB, uG, rr*1.6); amt = 1.; }
+      else if (abs(rr - .6) < .06){ idx = 15.; col = uG; amt = 1.; }
+      else if (rr > .78 && ((perp < uCell*.55 && rr < len1) || (perp2 < uCell*.5 && rr < 1.45))){
+        float a = mod(ang + 3.14159265/8., 3.14159265); float dir = floor(a/(3.14159265/4.));
+        idx = 10. + mod(dir, 4.); col = mix(uLight > .5 ? mix(uG, uB, .35) : uG, uB, uPulse*.5); amt = 1. - smoothstep(.9, len1, rr)*.55;
+      }
+      else if (sky && rr > 2.7 && rr < 2.8 + uPulse){ if (n21(cell) > .6){ idx = 15.; col = uG; amt = .6; } }
+    }
+    vec3 paper = uBg + (n21(fc + floor(uTime*8.)) - .5)*(uLight > .5 ? .028 : .018);
+    if (idx < 0.){ gl_FragColor = vec4(paper, 1.); return; }
+    float g = texture2D(tGlyph, vec2((idx + f.x)/16., f.y)).r;
+    gl_FragColor = vec4(mix(paper, col, g*amt), 1.);
+  }` })));
+
+/* towers, network lines, arcs (crisp, depth-tested against the terrain) */
+const fx = new THREE.Scene();
+const inkLine = new THREE.LineBasicMaterial({ color:P.c, transparent:true, opacity:.85 });
+const netMat = new THREE.LineDashedMaterial({ color:P.c, dashSize:.35, gapSize:.25, transparent:true, opacity:.4 });
+const slabEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(.9,.13,.55));
+const hitGeo = new THREE.BoxGeometry(1.1,2.4,1.1); hitGeo.translate(0,1.2,0);
+const NB = 8, towers = [];
+let poolI = 0, fly = 0;
+function nameTower(t){ const p = POOL[poolI++ % POOL.length]; t.name = p[0]; t.src = p[1]; t.rank = 4 + Math.floor(Math.random()*36); t.score = .55 + Math.random()*.33; t.top = false; t.dirtyLbl = true; }
+function placeTower(t, wz){ const qy = wz - fly; const side = Math.random() < .5 ? -1 : 1; t.q.set(path(qy) + side*(3.4 + Math.random()*6.5), qy); nameTower(t); }
+const labelsEl = document.getElementById("labels");
+for (let i=0;i<NB;i++){
+  const g = new THREE.Group(); fx.add(g);
+  const slabs = [];
+  for (let k=0;k<5;k++){ const s = new THREE.LineSegments(slabEdges, inkLine); s.position.y = .25 + k*.38; g.add(s); slabs.push(s); }
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-.2,0), new THREE.Vector3(0,2.3,0)]), inkLine));
+  const dia = new THREE.Mesh(new THREE.OctahedronGeometry(.17,0), new THREE.MeshBasicMaterial({ color:P.b })); dia.position.y = 2.55; g.add(dia);
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(.95,1.95,.6), new THREE.MeshBasicMaterial({ color:P.a, transparent:true, opacity:0, depthWrite:false })); glow.position.y = 1.05; g.add(glow);
+  const hit = new THREE.Mesh(hitGeo, new THREE.MeshBasicMaterial({ visible:false })); g.add(hit);
+  const lbl = document.createElement("div"); lbl.className = "lbl"; labelsEl.appendChild(lbl);
+  const t = { g, slabs, dia, glow, hit, lbl, q:new THREE.Vector2(), flash:0, twist:Math.random()*6 };
+  hit.userData.t = t;
+  placeTower(t, CAMZ - 12 - i*(46/NB) - Math.random()*3);
+  towers.push(t);
 }
-const pg = new THREE.BufferGeometry();
-pg.setAttribute("position", new THREE.BufferAttribute(pos,3));
-pg.setAttribute("aHome", new THREE.BufferAttribute(home,3));
-pg.setAttribute("aVel", new THREE.BufferAttribute(vel,3));
-const pMat = new THREE.ShaderMaterial({
-  uniforms:{ uT:{value:0}, uPix:{value:1} }, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
-  vertexShader:`attribute vec3 aHome; attribute vec3 aVel; uniform float uT; uniform float uPix; varying float vB;
-    void main(){ float boom=1.0-exp(-max(uT-0.35,0.0)*2.6); vec3 bp=aVel*boom*5.0;
-      float c=clamp((uT-2.0)/1.9,0.0,1.0); c=c*c*(3.0-2.0*c); vec3 p=mix(bp,aHome,c);
-      p*=smoothstep(0.0,0.3,uT);
-      vec4 mv=modelViewMatrix*vec4(p,1.0); gl_Position=projectionMatrix*mv;
-      vB=mix(1.7,0.42,c);
-      gl_PointSize=uPix*(1.0+2.4*(1.0-boom))*vB*(230.0/max(-mv.z,0.1)); }`,
-  fragmentShader:`varying float vB;
-    void main(){ float d=length(gl_PointCoord-0.5); if(d>0.5) discard; float a=smoothstep(0.5,0.0,d);
-      vec3 col=mix(vec3(0.33,0.84,0.66), vec3(0.92,1.0,0.97), clamp(vB-0.9,0.0,1.0));
-      gl_FragColor=vec4(col, a*clamp(vB,0.18,1.0)); }`
+const netGeo = new THREE.BufferGeometry(); netGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(NB*2*3), 3));
+const net = new THREE.LineSegments(netGeo, netMat); net.frustumCulled = false; fx.add(net);
+const ARC_N = 72;
+const arcGeo = new THREE.BufferGeometry(); arcGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(ARC_N*3), 3));
+const arc = new THREE.Line(arcGeo, new THREE.LineBasicMaterial({ color:P.b })); arc.frustumCulled = false; arc.visible = false; fx.add(arc);
+const packet = new THREE.Mesh(new THREE.OctahedronGeometry(.12,0), new THREE.MeshBasicMaterial({ color:P.b })); packet.visible = false; fx.add(packet);
+const rcpt = new THREE.Group(); rcpt.visible = false; fx.add(rcpt);
+rcpt.add(new THREE.Mesh(new THREE.BoxGeometry(.5,.16,.34), new THREE.MeshBasicMaterial({ color:P.a })));
+rcpt.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(.5,.16,.34)), inkLine));
+const probes = [];
+const probeGeo = new THREE.OctahedronGeometry(.16,0), ringGeo = new THREE.RingGeometry(.9,1,48); ringGeo.rotateX(-Math.PI/2);
+function addProbe(q){
+  const g = new THREE.Group();
+  const d = new THREE.Mesh(probeGeo, new THREE.MeshBasicMaterial({ color:P.b })); d.position.y = .55; g.add(d);
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0,.45,0)]), inkLine));
+  const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color:P.b, transparent:true, depthWrite:false, side:THREE.DoubleSide })); ring.position.y = .05; g.add(ring);
+  fx.add(g); probes.push({ g, d, ring, q:q.clone(), t:0 });
+  if (probes.length > 6){ const o = probes.shift(); fx.remove(o.g); }
+}
+
+/* layout */
+let W = 1, H = 1, PR = 1;
+const buf = new THREE.Vector2();
+const halo = document.getElementById("halo");
+function resize(){
+  const b = hero.getBoundingClientRect(); W = Math.max(1,b.width); H = Math.max(1,b.height);
+  r.setSize(W, H, false); PR = r.getPixelRatio(); r.getDrawingBufferSize(buf);
+  const narrow = W < 860;
+  cam.aspect = W/H; cam.fov = narrow ? 64 : 50; cam.updateProjectionMatrix();
+  rt.setSize(Math.ceil(buf.x/2), Math.ceil(buf.y/2));
+  pu.uCell.value = Math.round((narrow ? 7.5 : 9)*PR); pu.uRes.value.copy(buf);
+  const sun = { x: narrow ? W*.5 : W*.69, y: narrow ? H*.57 : H*.25, r: Math.min(W,H)*(narrow ? .075 : .085) };
+  pu.uSun.value.set(sun.x*PR, (H - sun.y)*PR); pu.uSunR.value = sun.r*PR;
+  const hsz = sun.r*2*2.7;
+  Object.assign(halo.style, { left:sun.x+"px", top:sun.y+"px", width:hsz+"px", height:hsz+"px" });
+  dirty = true;
+}
+new ResizeObserver(resize).observe(hero); resize();
+
+/* input */
+const ptr = { x:0, y:0, nx:0, ny:0, inside:false, down:false, downAt:0, moved:0 };
+const readout = document.getElementById("readout");
+const mouseQ = new THREE.Vector2(0,-999);
+canvas.addEventListener("pointermove", e => { const b = canvas.getBoundingClientRect(); ptr.x = e.clientX-b.left; ptr.y = e.clientY-b.top;
+  ptr.nx = ptr.x/b.width*2-1; ptr.ny = -(ptr.y/b.height*2-1); ptr.inside = e.pointerType === "mouse" || ptr.down; if (ptr.down) ptr.moved += Math.abs(e.movementX)+Math.abs(e.movementY); dirty = true; });
+canvas.addEventListener("pointerleave", () => { ptr.inside = false; ptr.down = false; readout.hidden = true; });
+canvas.addEventListener("pointerdown", () => { ptr.down = true; ptr.downAt = performance.now(); ptr.moved = 0; });
+canvas.addEventListener("pointerup", e => { const dt = performance.now()-ptr.downAt; ptr.down = false; if (e.pointerType !== "mouse"){ ptr.inside = false; readout.hidden = true; }
+  if (dt < 260 && ptr.moved < 8 && mouseQ.y > -900){ addProbe(mouseQ); tu.uW1Q.value.copy(mouseQ); tu.uW1T.value = 0; dirty = true; } });
+canvas.addEventListener("pointercancel", () => { ptr.down = false; ptr.inside = false; readout.hidden = true; });
+const ray = new THREE.Raycaster(), groundPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0), hitP = new THREE.Vector3();
+
+/* routing events from the interface */
+let route = null, pulse = 0, rcptT = 9;
+function pickTower(){
+  let best = null, bs = 1e9; const v = new THREE.Vector3();
+  for (const t of towers){ const wz = t.q.y + fly; if (wz > CAMZ-11 || wz < CAMZ-34) continue;
+    v.set(t.q.x, ground(t.q.x,t.q.y)+1, wz).project(cam); if (Math.abs(v.x) > .9) continue;
+    const sc = Math.abs(v.x - (W < 860 ? 0 : .35)); if (sc < bs){ bs = sc; best = t; } }
+  if (!best){ best = towers[0]; placeTower(best, CAMZ-24); }
+  return best;
+}
+addEventListener("ax:route", e => {
+  const d = e.detail, t = pickTower();
+  towers.forEach(x => { if (x.top){ x.top = false; x.rank = 4 + Math.floor(Math.random()*30); x.dirtyLbl = true; } });
+  t.name = d.spec; t.src = d.src; t.rank = 1; t.score = .97; t.top = true; t.dirtyLbl = true;
+  route = { t, k:0, arrived:false, hold:0 }; dirty = true;
 });
-const points = new THREE.Points(pg, pMat); points.frustumCulled=false; scene.add(points);
+addEventListener("ax:arrive", () => {
+  if (!route) return; const t = route.t;
+  t.flash = 1; tu.uW2Q.value.copy(t.q); tu.uW2T.value = RM ? -1 : 0; pulse = 1; rcptT = 0; rcpt.visible = !RM;
+  route.arrived = true; route.hold = 0; dirty = true;
+});
 
-/* post: bloom that spikes at detonation */
-const composer=new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.9, 0.6, 0.5);
-composer.addPass(bloom); composer.addPass(new OutputPass());
+/* loop */
+let visible = true, speed = 1.8, intro = RM ? 1 : 0, camY = 6, scan = 0;
+new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(hero);
+const hud = document.getElementById("hud");
+const proj = new THREE.Vector3(), v3 = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3(), nv = new THREE.Vector2();
+let last = performance.now(), hudT = 0;
+function frame(t){
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, (t-last)/1000); last = t;
+  if (!visible || document.hidden) return;
+  if (RM && !dirty && !ptr.inside) return;
+  dirty = false;
+  const step = RM ? 0 : dt;
+  const boost = ptr.down && performance.now()-ptr.downAt > 220;
+  speed += ((boost ? 7.5 : 1.8) - speed)*Math.min(1, dt*2.2);
+  fly += speed*step;
+  intro = Math.min(1, intro + step/3.6); const ie = 1 - Math.pow(1-intro, 3);
+  if (intro >= 1) window.AXFX_READY = true;
+  const qc = CAMZ - fly, cx = path(qc);
+  let gmax = -9; for (let k=0;k<=8;k+=2) gmax = Math.max(gmax, ground(path(qc-k), qc-k));
+  camY += (Math.max(gmax + 2.6, 5.4) - camY)*Math.min(1, dt*2.5 + (RM ? 1 : 0));
+  const pmx = ptr.inside ? ptr.nx : 0, pmy = ptr.inside ? ptr.ny : 0;
+  cam.position.set(cx, camY + (1-ie)*16, CAMZ + (1-ie)*6);
+  cam.up.set(0,1,0);
+  cam.lookAt(path(qc-10) + pmx*2.6, camY + (W < 860 ? 1.1 : -2.1) + pmy*.6 - (1-ie)*9, CAMZ-10);
+  cam.rotateZ((path(qc-7) - cx)*.05 - pmx*.07);
+  cam.updateMatrixWorld();
+  const sx = Math.round(cx/STEPX)*STEPX, rem = ((fly % STEPZ) + STEPZ) % STEPZ;
+  tMesh.position.set(sx, 0, CAMZ + 4 - TD/2 + rem); dMesh.position.copy(tMesh.position);
+  tu.uFly.value = fly; tu.uTime.value += step; pu.uTime.value += step;
+  if (ptr.inside){
+    ray.setFromCamera(nv.set(ptr.nx, ptr.ny), cam);
+    if (ray.ray.intersectPlane(groundPlane, hitP)){ mouseQ.set(hitP.x, hitP.z - fly);
+      tu.uMouseQ.value.lerp(mouseQ, tu.uMouseQ.value.y < -900 ? 1 : .2);
+      readout.hidden = false; readout.style.transform = `translate(${ptr.x+18}px,${ptr.y+16}px)`;
+      readout.textContent = `N ${(1000+mouseQ.y*-12).toFixed(0).padStart(4,"0")} · E ${(1000+mouseQ.x*12).toFixed(0).padStart(4,"0")} · ALT ${Math.round((ground(mouseQ.x,mouseQ.y)+2.4)*60)} M`;
+    } else readout.hidden = true;
+  }
+  tu.uLift.value += ((ptr.inside ? 1 : 0) - tu.uLift.value)*Math.min(1, dt*3);
+  scan += ((ptr.inside ? 1 : 0) - scan)*Math.min(1, dt*4);
+  pu.uScan.value = scan; pu.uMouse.value.set(ptr.x*PR, (H-ptr.y)*PR);
+  if (tu.uW1T.value >= 0) tu.uW1T.value += step*.55;
+  if (tu.uW2T.value >= 0) tu.uW2T.value += step*.5;
+  pulse *= RM ? 0 : Math.pow(.25, dt); pu.uPulse.value = pulse;
 
-const mid=document.getElementById("mid"), hud=document.getElementById("hud"), flash=document.getElementById("flash");
-function project(v){ const p=v.clone().project(camera); const w=canvas.clientWidth,h=canvas.clientHeight; return { x:(p.x*.5+.5)*w, y:(-p.y*.5+.5)*h }; }
-function resize(){ const w=innerWidth,h=innerHeight; renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.setSize(w,h); composer.setSize(w,h); bloom.setSize(w,h); bgU.uRes.value.set(w,h);
-  pMat.uniforms.uPix.value=Math.min(devicePixelRatio,2); camera.aspect=w/h; camera.updateProjectionMatrix(); }
-addEventListener("resize",resize); resize();
+  const order = [];
+  for (const tw of towers){
+    let wz = tw.q.y + fly;
+    if (wz > CAMZ + 3 && !(route && route.t === tw && !route.arrived)){ placeTower(tw, CAMZ - 46 - Math.random()*8); wz = tw.q.y + fly; }
+    const gy = ground(tw.q.x, tw.q.y);
+    tw.g.position.set(tw.q.x, gy, wz);
+    tw.slabs.forEach((s,k) => s.rotation.y = tw.twist + k*.32 + tu.uTime.value*.25);
+    tw.dia.rotation.y = tu.uTime.value*1.2; tw.dia.position.y = 2.55 + Math.sin(tu.uTime.value*2 + tw.twist)*.06;
+    tw.flash *= RM ? 0 : Math.pow(.35, dt); tw.glow.material.opacity = tw.flash*.45 + (tw.top ? .08 : 0);
+    order.push(tw);
+    proj.set(tw.q.x, gy + 3.05, wz).project(cam);
+    const dist = CAMZ - wz, lx = (proj.x*.5+.5)*W, ly = (-proj.y*.5+.5)*H;
+    tw.g.visible = dist > 6.5 && (W < 860 || lx > W*.44);
+    const clearOfCopy = W < 860 ? ly > H*.62 && ly < H - 260 : lx > W*.5 && ly > 96 && !(lx > W - 480 && ly > H - 300);
+    const show = proj.z < 1 && dist > 4 && dist < 40 && Math.abs(proj.x) < 1.05 && proj.y < .92 && clearOfCopy;
+    if (tw.dirtyLbl){ tw.lbl.innerHTML = `<b>#${tw.rank}</b>${esc(tw.name)}<span class="x">${esc(tw.src)} · score ${tw.score.toFixed(2)}</span>`; tw.lbl.classList.toggle("top", tw.top); tw.dirtyLbl = false; }
+    if (show){ tw.lbl.style.opacity = String(Math.min(1, (40-dist)/10, (dist-4)/3)*(W < 860 && !tw.top ? 0 : 1));
+      tw.lbl.style.transform = `translate(${lx}px,${ly}px) translate(-50%,-100%)`; }
+    else tw.lbl.style.opacity = "0";
+  }
+  if (ptr.inside){
+    ray.setFromCamera(nv.set(ptr.nx, ptr.ny), cam);
+    const hit = ray.intersectObjects(towers.map(x => x.hit))[0];
+    towers.forEach(x => x.lbl.classList.toggle("on", !!hit && hit.object.userData.t === x));
+    canvas.style.cursor = hit ? "pointer" : "crosshair";
+  }
+  order.sort((a,b) => a.g.position.z - b.g.position.z);
+  const np = netGeo.attributes.position.array; let n = 0;
+  for (let i=0;i<order.length-1;i++){ const A = order[i].g.position, B = order[i+1].g.position; np.set([A.x, A.y+2.55, A.z, B.x, B.y+2.55, B.z], n); n += 6; }
+  np.fill(0, n); netGeo.attributes.position.needsUpdate = true; net.computeLineDistances();
+  for (const p of probes){ p.t += step; const wz = p.q.y + fly; p.g.position.set(p.q.x, ground(p.q.x,p.q.y), wz);
+    p.d.rotation.y += step*2; const s = 1 + p.t*3.5; p.ring.scale.set(s,1,s); p.ring.material.opacity = Math.max(0, 1 - p.t/1.4); p.g.visible = wz < CAMZ + 3; }
 
-const hubTag=document.createElement("div"); hubTag.className="nodeTag hub"; hubTag.textContent="AXIOM"; hubTag.style.opacity=0; mid.appendChild(hubTag);
-let activeId="sanctions", camT=new THREE.Vector3(0,0.2,9.2), lookT=new THREE.Vector3(0,0,0), t0=performance.now();
-const INTRO = reduce ? 0.01 : 4.2;
-
-function frame(now){
-  const t=(now-t0)/1000;
-  const intro = t < INTRO;
-  bgU.uTime.value=t; core.material.uniforms.uTime.value=t; pMat.uniforms.uT.value=reduce?6:t;
-
-  // reveal curves
-  const rev=reduce?1:THREE.MathUtils.smoothstep(t,2.5,3.9);
-  bgU.uReveal.value=reduce?1:THREE.MathUtils.smoothstep(t,1.2,3.6);
-  core.material.uniforms.uReveal.value=rev; wire.material.opacity=rev*0.5;
-  // flash + bloom spike at detonation (~0.5s)
-  if(!reduce){ const spike=Math.exp(-Math.pow((t-0.5)/0.32,2)); bloom.strength=0.9+2.0*spike; flash.style.opacity=(0.95*spike).toFixed(3); }
-  else { flash.style.opacity=0; }
-
-  if(!reduce){ core.rotation.y=t*0.28; core.rotation.x=t*0.12; wire.rotation.y=-t*0.1; wire.rotation.z=t*0.05;
-    scene.rotation.y=Math.sin(t*0.08)*0.22; points.rotation.y=t*0.012; }
-  core.scale.setScalar(1+Math.sin(t*1.6)*0.03);
-
-  // camera: dolly back through the blast during intro, then ease to the active node
-  if(intro && !reduce){ const k=THREE.MathUtils.smoothstep(t,0.35,INTRO); camera.position.set(0,0.2, 3.4+(9.2-3.4)*k); camera.lookAt(0,0,0); }
-  else {
-    const act=nodes.find(n=>n.ex&&n.ex.id===activeId);
-    if(act){ const dir=act.base.clone().normalize(); camT.set(act.base.x*0.35+dir.x*1.5, act.base.y*0.35+1.0, 8.4); lookT.lerp(act.base.clone().multiplyScalar(0.5),0.06); }
-    camera.position.lerp(camT, reduce?1:0.03); camera.lookAt(lookT);
+  if (route){
+    const tp = route.t.g.position;
+    if (!route.arrived && !RM){
+      route.k = Math.min(1, route.k + step/1.35); const e = 1 - Math.pow(1-route.k, 2);
+      v3.set(cam.position.x + pmx*.5, cam.position.y - 1.5, cam.position.z - 3.5);
+      vB.set(tp.x, tp.y + 2.55, tp.z); vC.copy(v3).lerp(vB, .5); vC.y = Math.max(v3.y, vB.y) + 3.2;
+      const ap = arcGeo.attributes.position.array;
+      for (let i=0;i<ARC_N;i++){ const u = i/(ARC_N-1), a1 = (1-u)*(1-u), b1 = 2*(1-u)*u, c1 = u*u;
+        ap[i*3] = a1*v3.x + b1*vC.x + c1*vB.x; ap[i*3+1] = a1*v3.y + b1*vC.y + c1*vB.y; ap[i*3+2] = a1*v3.z + b1*vC.z + c1*vB.z; }
+      arcGeo.attributes.position.needsUpdate = true; arcGeo.setDrawRange(0, Math.max(2, Math.floor(e*ARC_N)));
+      arc.visible = true; packet.visible = true;
+      const pi = Math.min(ARC_N-1, Math.floor(e*(ARC_N-1)));
+      packet.position.set(ap[pi*3], ap[pi*3+1], ap[pi*3+2]); packet.rotation.y += step*6;
+    } else if (route.arrived){
+      route.hold += step; arc.visible = route.hold < .9 && !RM; packet.visible = false;
+      if (rcpt.visible){ rcptT += step; rcpt.position.set(tp.x, tp.y + 2.9 + rcptT*1.6, tp.z); rcpt.rotation.y += step*2.2; rcpt.rotation.x = .3;
+        rcpt.scale.setScalar(Math.max(.001, 1 - Math.max(0, rcptT-1.2))*1.2); if (rcptT > 2.2) rcpt.visible = false; }
+      if (route.hold > 6) route = null;
+    }
   }
 
-  nodes.forEach(n=>{
-    const on=n.ex&&n.ex.id===activeId;
-    n.m.material.opacity=(n.real?1:0.9)*rev; n.line.material.opacity=(on?0.9:(n.real?0.5:0.25))*rev;
-    n.m.material.color.setHex(on?0x8ff0d4:(n.real?0x6fe3c0:0x2b3647));
-    n.m.scale.setScalar(on?1.55+Math.sin(t*5)*0.12:(n.real?1:0.9));
-    n.line.material.color.setHex(on?0x59d6ab:0x2b3647);
-    if(on&&!reduce&&!intro){ n.pulse.visible=true; const k=(t*0.55)%1; n.pulse.position.copy(n.base).multiplyScalar(k); } else n.pulse.visible=false;
-    if(n.tag){ const pr=project(n.m.position); n.tag.style.left=pr.x+"px"; n.tag.style.top=(pr.y-24)+"px"; n.tag.style.opacity=rev*(on?1:0.8); n.tag.classList.toggle("on",!!on); }
-  });
-  const hp=project(new THREE.Vector3(0,0,0)); hubTag.style.left=hp.x+"px"; hubTag.style.top=(hp.y-38)+"px"; hubTag.style.opacity=rev;
-  hud.style.opacity = reduce?1:THREE.MathUtils.smoothstep(t,3.1,4.2).toFixed(3);
+  hudT += dt; if (hudT > .12){ hudT = 0; hud.innerHTML = `ALT ${String(Math.round((camY+2.4)*60)).padStart(4,"0")} M<br>SPD ${(speed*48).toFixed(0).padStart(3,"0")} KN${boost ? " · BOOST" : ""}<br>HOLD TO FLY FASTER`; }
 
-  composer.render(); requestAnimationFrame(frame);
+  r.setRenderTarget(rt); r.setClearColor(0x000000, 0); r.clear(); r.render(tScene, cam);
+  r.setRenderTarget(null); r.setClearColor(P.bg, 1); r.clear();
+  r.render(pScene, pCam);
+  r.clearDepth(); r.render(dScene, cam);
+  r.render(fx, cam);
 }
 requestAnimationFrame(frame);
-
-/* HUD data wiring */
-const el=id=>document.getElementById(id);
-function paint(ex,live){
-  activeId=ex.id;
-  el("q").textContent=ex.q; el("mAns").textContent=ex.model; el("aAns").textContent=ex.axiom;
-  el("aNode").textContent=ex.node; el("aSrc").textContent=ex.source; el("aCost").textContent=ex.cost;
-  el("aRcpt").textContent=ex.receipt?SHORT(ex.receipt):"pending";
-  const v=el("aVerify"); if(ex.signal){ v.href=NODE_URL+ex.signal; v.style.display=""; } else v.style.display="none";
-  el("status").textContent="routed to "+ex.node+"  /  "+ex.cost+(live?"  /  live":"  /  verified");
-  [...document.getElementById("chips").children].forEach(c=>c.classList.toggle("active",c.dataset.id===ex.id));
 }
-const chips=document.getElementById("chips");
-EXAMPLES.forEach((ex,i)=>{ const b=document.createElement("button"); b.className="chip"; b.dataset.id=ex.id; b.textContent=ex.label;
-  b.onclick=()=>paint(ex); chips.appendChild(b); if(i===0)b.classList.add("active"); });
-paint(EXAMPLES[0]);
-
-const tryBtn=el("tryBtn"), tryInput=el("tryInput");
-async function runLive(){
-  const task=tryInput.value.trim(); if(!task) return;
-  tryBtn.disabled=true; tryBtn.textContent="Routing"; el("status").textContent="buying a fresh answer";
-  try{
-    const r=await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task})});
-    if(!r.ok) throw 0; const d=await r.json(); if(d.error||!d.answer) throw 0;
-    paint({ id:"live", node:(d.specialist||"specialist").toUpperCase(), q:task,
-      model:"A plain model would answer this from memory, with no live source and no receipt.",
-      axiom: typeof d.answer==="string"?d.answer:(d.answer.summary||d.answer.answer||JSON.stringify(d.answer)),
-      source:d.source||d.specialist||"ranked specialist", cost:(d.costUsd!=null?d.costUsd+" USD":"0.01 USD"),
-      receipt:d.receiptHash||"", signal:d.signalHash||"" }, true);
-  }catch(e){ el("status").textContent="live answers rolling out  /  the three examples are real runs";
-  }finally{ tryBtn.disabled=false; tryBtn.textContent="Ask"; }
-}
-tryBtn.onclick=runLive; tryInput.addEventListener("keydown",e=>{ if(e.key==="Enter") runLive(); });
 </script>
