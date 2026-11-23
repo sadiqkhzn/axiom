@@ -1,8 +1,8 @@
 {
-  "name": "verified-intelligence-mind",
+  "name": "axiom",
   "version": "1.0.0",
   "private": false,
-  "description": "A general-purpose agent that routes any task to the top-ranked specialist on Telegraph, pays per call, and returns a cited answer with a verifiable receipt.",
+  "description": "Axiom routes any task to the top-ranked specialist on Telegraph, pays per call, and returns a cited answer with a verifiable receipt.",
   "type": "module",
   "license": "MIT",
   "engines": {

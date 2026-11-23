@@ -1,8 +1,13 @@
-# Verified Intelligence Mind
+# Axiom
 
-A general-purpose agent that answers a plain-language question by buying the answer from the best-ranked
-specialist on Telegraph, instead of guessing with a language model. Every answer comes back with the provider
-that produced it, the price paid, and a receipt you can verify against the network yourself.
+The verified answer layer for agents.
+
+An axiom is a truth you build everything else on. That is the idea here. Axiom takes any plain-language question,
+routes it to the best-ranked specialist on Telegraph, pays per call, and returns a cited answer with a receipt you
+can verify against the network yourself. Every answer comes back proven, not guessed, with the provider that
+produced it and the price paid.
+
+If Axiom is useful to you, star the repo. It takes a second and it helps.
 
 Most agents on Telegraph wire up one kind of intelligence: a supplier check, a token risk score, one data feed.
 This one is the layer above that. You give it any task. It works out which intent the task belongs to, routes to
