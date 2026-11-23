@@ -1,0 +1,346 @@
+<title>Axiom</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<style>
+  /* One full-screen WebGL world. The UI is a thin glass HUD floating over it, never a sidebar. */
+  :root {
+    --bg: #05070b;
+    --fg: #eaf0f8;
+    --muted: #8b97ac;
+    --faint: #586074;
+    --accent: #59d6ab;
+    --accent-deep: #1c6b56;
+    --bad: #e77a7a;
+    --glass: rgba(14,19,28,0.56);
+    --glass-line: rgba(120,140,170,0.16);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--fg); overflow: hidden;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+  .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(130% 120% at 50% 42%, transparent 55%, rgba(0,0,0,0.5) 100%); }
+
+  .hud { position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    padding: max(20px, env(safe-area-inset-top,0px)) max(20px, env(safe-area-inset-right,0px)) max(20px, env(safe-area-inset-bottom,0px)) max(20px, env(safe-area-inset-left,0px));
+    display: grid; grid-template-rows: auto 1fr auto; gap: 14px; }
+  .hud a, .hud button, .hud input, .nodeTag { pointer-events: auto; }
+
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .mark { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: clamp(22px, 3.4vw, 30px);
+    letter-spacing: 0.34em; margin: 0; line-height: 1; }
+  .mark b { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 12.5px; margin-top: 7px; max-width: 42ch; line-height: 1.45; }
+  .star { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; color: var(--fg);
+    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-line); padding: 8px 13px; border-radius: 999px; font-size: 12.5px; white-space: nowrap; }
+  .star b { color: var(--accent); }
+  .star:hover { border-color: var(--accent-deep); }
+
+  .mid { position: relative; }
+  .nodeTag { position: absolute; transform: translate(-50%,-50%); font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    white-space: nowrap; transition: color .35s, opacity .35s; opacity: .8; text-shadow: 0 0 10px rgba(0,0,0,.6); }
+  .nodeTag.on { color: var(--accent); opacity: 1; }
+  .nodeTag.hub { color: var(--fg); letter-spacing: 0.28em; font-size: 11px; }
+
+  .bottom { display: grid; grid-template-columns: minmax(0,1fr) minmax(0, 360px); gap: 14px; align-items: end; }
+  @media (max-width: 760px) { .bottom { grid-template-columns: 1fr; } }
+
+  .controls { display: flex; flex-direction: column; gap: 10px; align-self: end; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { font: inherit; font-size: 12px; cursor: pointer; color: var(--fg);
+    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-line); border-radius: 999px; padding: 7px 13px; transition: .2s; }
+  .chip:hover { border-color: var(--accent-deep); }
+  .chip.active { border-color: var(--accent); color: var(--accent); background: rgba(21,52,43,0.6); }
+  .tryrow { display: flex; gap: 7px; max-width: 460px; }
+  .tryrow input { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; color: var(--fg);
+    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-line); border-radius: 10px; padding: 9px 12px; }
+  .tryrow input:focus { outline: none; border-color: var(--accent); }
+  .tryrow button { font: inherit; font-weight: 500; cursor: pointer; color: #061410; background: var(--accent);
+    border: 0; border-radius: 10px; padding: 9px 15px; }
+  .tryrow button:disabled { opacity: .5; }
+  .status { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); letter-spacing: 0.04em; }
+
+  .proof { background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-line); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 11px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+  .q { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--fg); line-height: 1.5; word-break: break-word; }
+  .q::before { content: "? "; color: var(--accent); }
+  .two { display: grid; grid-template-columns: 1fr; gap: 9px; }
+  .slab { border-radius: 10px; padding: 10px 11px; border: 1px solid var(--glass-line); }
+  .slab.m { background: rgba(10,12,18,0.5); }
+  .slab.a { background: rgba(13,30,24,0.55); border-color: var(--accent-deep); }
+  .slab h4 { margin: 0 0 5px; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .slab.a h4 { color: var(--accent); }
+  .slab p { margin: 0; font-size: 12px; line-height: 1.45; }
+  .slab.m p { color: var(--muted); }
+  .no { margin-top: 7px; font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--bad); }
+  .rcpt { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
+  .rcpt .row { display: flex; gap: 7px; color: var(--muted); }
+  .rcpt .row span:first-child { color: var(--faint); min-width: 46px; }
+  .rcpt .row span:last-child { color: var(--fg); word-break: break-all; }
+  .verify { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-deep); width: fit-content; }
+  .verify:hover { border-color: var(--accent); }
+  .ok { color: var(--accent); }
+
+  .loading { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: var(--bg);
+    transition: opacity .6s; font-family: "IBM Plex Mono", monospace; color: var(--muted); font-size: 12px; letter-spacing: .2em; }
+  @media (prefers-reduced-motion: reduce) { .loading { transition: none; } }
+</style>
+
+<canvas id="gl"></canvas>
+<div class="vignette"></div>
+<div class="loading" id="loading">AXIOM</div>
+
+<div class="hud">
+  <div class="top">
+    <div>
+      <h1 class="mark">A<b>X</b>IOM</h1>
+      <p class="sub">The verified answer layer for agents. Any task routes to the top ranked specialist on Telegraph and returns a cited answer with a receipt anyone can verify.</p>
+    </div>
+    <a class="star" href="https://github.com/sadiqkhzn/axiom" target="_blank" rel="noopener">Star on GitHub <b>&#9733;</b></a>
+  </div>
+
+  <div class="mid" id="mid"></div>
+
+  <div class="bottom">
+    <div class="controls">
+      <div class="chips" id="chips"></div>
+      <div class="tryrow">
+        <input id="tryInput" placeholder="Ask your own: a company, a name to screen, a URL" autocomplete="off">
+        <button id="tryBtn">Ask</button>
+      </div>
+      <div class="status" id="status">select a question, watch it route</div>
+    </div>
+
+    <div class="proof">
+      <div class="q" id="q"></div>
+      <div class="two">
+        <div class="slab m">
+          <h4>Plain model</h4>
+          <p id="mAns"></p>
+          <div class="no">no source &middot; no receipt</div>
+        </div>
+        <div class="slab a">
+          <h4>Axiom &middot; <span id="aNode"></span></h4>
+          <p id="aAns"></p>
+          <div class="rcpt">
+            <div class="row"><span>source</span><span id="aSrc"></span></div>
+            <div class="row"><span>cost</span><span id="aCost"></span></div>
+            <div class="row"><span>receipt</span><span id="aRcpt"></span></div>
+            <div class="row"><span>status</span><span class="ok">verified on node</span></div>
+            <a class="verify" id="aVerify" target="_blank" rel="noopener">check the record yourself &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const NODE_URL = "https://devnode.telegraphprotocol.com/engine/v1/signal/";
+const EXAMPLES = [
+  { id:"sanctions", node:"SANCTIONS", label:"Sanctions check",
+    q:'Is "Rosoboronexport" on the OFAC sanctions list?',
+    model:"From general knowledge, Rosoboronexport is subject to US sanctions and has been placed on the OFAC SDN list. For the exact listing and date, consult the OFAC website.",
+    axiom:'Listed. Rosoboronexport matches "JSC ROSOBORONEXPORT" on the EU consolidated list and the US OFAC list. Block the transaction and check the official notice.',
+    source:"US OFAC, EU consolidated", cost:"0.01 USD",
+    receipt:"0x3a37e0c6fdae14fa205d3f4bc543c94244fd2e0e6c10ddbe8323eec91900165e",
+    signal:"0xb0af9c9ce6999552ccc681212047da219cf51d64d844175a5b24cd0cb181d1ee" },
+  { id:"identity", node:"IDENTITY", label:"Company identity",
+    q:"What is the exact LEI of Citigold Corporation Limited?",
+    model:"I cannot provide the exact LEI of Citigold Corporation Limited from general knowledge, as this identifier requires a reliable data source to confirm.",
+    axiom:"CITIGOLD CORPORATION LIMITED, headquartered in Fortitude Valley, AU. LEI 529900C4YHWJ2XJ8A350, jurisdiction AU, status ACTIVE.",
+    source:"Global LEI Index", cost:"0.01 USD",
+    receipt:"0x10d7b7b3b4054fa7da8b0beff49577e03668f6099ccac80a3d6c5031ab42609c",
+    signal:"0xc004e0c5efa326e580eaa0fe6ad6907e3647ece199592c0fed52e640283b739d" },
+  { id:"url", node:"URL SAFETY", label:"URL safety",
+    q:"Is https://binance.com safe to use right now?",
+    model:"From general knowledge, Binance is one of the largest crypto exchanges and is generally considered safe, though it depends on regional regulations and your own account security.",
+    axiom:"Safe within the checks performed. binance.com is absent from URLhaus, phishunt and the CERT Polska list and resolves over valid transport, as of 2026-11-23. Absence of a listing is not a guarantee.",
+    source:"URLhaus, phishunt, CERT Polska", cost:"0.01 USD",
+    receipt:"0x6c3c91d874332befba54ea3246c7dff95b25d36530ba408ac11ad5f77d78c8e2",
+    signal:"0xc09b76f972f70c35ed6dbe022d01c0230a3dfd93aef44042f1a37e6e28061f9b" }
+];
+const SHORT = h => h.slice(0,10) + "..." + h.slice(-8);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ACCENT = new THREE.Color(0x59d6ab);
+
+const canvas = document.getElementById("gl");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:"high-performance" });
+renderer.setClearColor(0x05070b, 1);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
+camera.position.set(0, 0.2, 9.2);
+
+/* fbm nebula background on a large plane, kept dark so bloom ignores it */
+const bgUniforms = { uTime:{value:0}, uRes:{value:new THREE.Vector2(1,1)} };
+const bg = new THREE.Mesh(
+  new THREE.PlaneGeometry(2,2),
+  new THREE.ShaderMaterial({
+    uniforms: bgUniforms, depthWrite:false, depthTest:false,
+    vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.999,1.0); }`,
+    fragmentShader:`precision highp float; varying vec2 vUv; uniform float uTime; uniform vec2 uRes;
+      float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+      float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+        vec2 u=f*f*(3.-2.*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
+      float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=.5; } return v; }
+      void main(){ vec2 uv=vUv; vec2 p=(uv-.5)*vec2(uRes.x/uRes.y,1.)*2.3; float t=uTime*0.025;
+        float f=fbm(p*1.4 + vec2(t,-t*0.6) + fbm(p*0.7 - t)*0.7);
+        vec3 deep=vec3(0.016,0.026,0.042), teal=vec3(0.02,0.10,0.095);
+        vec3 col=mix(deep,teal,smoothstep(0.32,0.92,f));
+        float w=smoothstep(0.58,0.80,fbm(p*2.1+vec2(-t*1.3,t))); col+=vec3(0.02,0.13,0.10)*w*0.5;
+        col*=smoothstep(1.45,0.25,length(uv-.5)*1.7);
+        gl_FragColor=vec4(col,1.0); }`
+  })
+);
+bg.frustumCulled=false; scene.add(bg);
+
+/* Axiom core: fresnel-rim icosahedron that blooms on the rim */
+const core = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(0.95, 3),
+  new THREE.ShaderMaterial({
+    uniforms:{ uTime:{value:0}, uColor:{value:ACCENT.clone()} },
+    transparent:true,
+    vertexShader:`varying vec3 vN; varying vec3 vV; uniform float uTime;
+      void main(){ vec3 pos=position; float d=sin(pos.y*5.0+uTime*1.3)*0.012+sin(pos.x*7.0-uTime)*0.010; pos+=normal*d;
+        vec4 mv=modelViewMatrix*vec4(pos,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`varying vec3 vN; varying vec3 vV; uniform vec3 uColor;
+      void main(){ float fr=pow(1.0-max(dot(vN,vV),0.0),2.4); vec3 core=vec3(0.02,0.05,0.06);
+        vec3 col=core + uColor*fr*2.3; float a=0.22+fr*0.95; gl_FragColor=vec4(col,a); }`
+  })
+);
+scene.add(core);
+const wire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5,1),
+  new THREE.MeshBasicMaterial({ color:0x2b3a4e, wireframe:true, transparent:true, opacity:0.5 }));
+scene.add(wire);
+
+/* specialist nodes on a ring, three real plus dim decoys */
+const RING = [
+  { ex:EXAMPLES[0], ang:-0.25 }, { ex:EXAMPLES[1], ang:1.35 }, { ex:EXAMPLES[2], ang:2.95 },
+  { ex:null, ang:4.15 }, { ex:null, ang:5.05 }, { ex:null, ang:5.85 }
+];
+const R=3.9, nodes=[];
+RING.forEach((slot,i)=>{
+  const x=Math.cos(slot.ang)*R, y=Math.sin(slot.ang)*R*0.6, z=(i%2?0.7:-0.7);
+  const real=!!slot.ex;
+  const m=new THREE.Mesh(new THREE.SphereGeometry(real?0.3:0.15, 24,24),
+    new THREE.MeshBasicMaterial({ color: real?0x6fe3c0:0x2b3647 }));
+  m.position.set(x,y,z); scene.add(m);
+  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),m.position.clone()]),
+    new THREE.LineBasicMaterial({ color:0x2b3647, transparent:true, opacity:real?0.55:0.25 }));
+  scene.add(line);
+  const pulse=new THREE.Mesh(new THREE.SphereGeometry(0.11,12,12), new THREE.MeshBasicMaterial({ color:ACCENT }));
+  pulse.visible=false; scene.add(pulse);
+  let tag=null;
+  if(real){ tag=document.createElement("div"); tag.className="nodeTag"; tag.textContent=slot.ex.node;
+    document.getElementById("mid").appendChild(tag); }
+  nodes.push({ ...slot, m, line, pulse, base:m.position.clone(), real, tag });
+});
+
+/* drifting particle field for depth */
+const PN=320, pp=new Float32Array(PN*3);
+for(let i=0;i<PN;i++){ pp[i*3]=(THREE.MathUtils.randFloatSpread(34)); pp[i*3+1]=THREE.MathUtils.randFloatSpread(22); pp[i*3+2]=-4-Math.random()*26; }
+const particles=new THREE.Points(new THREE.BufferGeometry().setAttribute("position",new THREE.BufferAttribute(pp,3)),
+  new THREE.PointsMaterial({ color:0x3a4a64, size:0.06, transparent:true, opacity:0.8 }));
+scene.add(particles);
+
+/* post: single bloom pass tuned so only emissive core/nodes/lines glow */
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.9, 0.55, 0.5);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+const mid=document.getElementById("mid");
+function project(v){ const p=v.clone().project(camera); const w=canvas.clientWidth,h=canvas.clientHeight;
+  return { x:(p.x*.5+.5)*w, y:(-p.y*.5+.5)*h }; }
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(w,h); composer.setSize(w,h); bloom.setSize(w,h); bgUniforms.uRes.value.set(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix(); }
+addEventListener("resize",resize); resize();
+
+let activeId="sanctions", camTarget=new THREE.Vector3(0,0.2,9.2), lookTarget=new THREE.Vector3(0,0,0), t0=performance.now();
+const hubTag=document.createElement("div"); hubTag.className="nodeTag hub"; hubTag.textContent="AXIOM"; mid.appendChild(hubTag);
+
+function frame(now){
+  const t=(now-t0)/1000; bgUniforms.uTime.value=t; core.material.uniforms.uTime.value=t;
+  if(!reduce){ core.rotation.y=t*0.28; core.rotation.x=t*0.12; wire.rotation.y=-t*0.1; wire.rotation.z=t*0.05;
+    scene.rotation.y=Math.sin(t*0.08)*0.22; particles.rotation.y=t*0.01; }
+  core.scale.setScalar(1+Math.sin(t*1.6)*0.03);
+  // camera eases toward a framing of the active node
+  const act=nodes.find(n=>n.ex&&n.ex.id===activeId);
+  if(act){ const dir=act.base.clone().normalize(); camTarget.set(act.base.x*0.35+dir.x*1.5, act.base.y*0.35+1.0, 8.4);
+    lookTarget.lerp(act.base.clone().multiplyScalar(0.5),0.06); }
+  camera.position.lerp(camTarget, reduce?1:0.03); camera.lookAt(lookTarget);
+  nodes.forEach(n=>{
+    const on=n.ex&&n.ex.id===activeId;
+    n.m.material.color.setHex(on?0x8ff0d4:(n.real?0x6fe3c0:0x2b3647));
+    n.m.scale.setScalar(on?1.55+Math.sin(t*5)*0.12:(n.real?1:0.9));
+    n.line.material.color.setHex(on?0x59d6ab:0x2b3647); n.line.material.opacity=on?0.9:(n.real?0.5:0.25);
+    if(on&&!reduce){ n.pulse.visible=true; const k=(t*0.55)%1; n.pulse.position.copy(n.base).multiplyScalar(k); }
+    else n.pulse.visible=false;
+    if(n.tag){ const pr=project(n.m.position); n.tag.style.left=pr.x+"px"; n.tag.style.top=(pr.y-24)+"px"; n.tag.classList.toggle("on",!!on); }
+  });
+  const hp=project(new THREE.Vector3(0,0,0)); hubTag.style.left=hp.x+"px"; hubTag.style.top=(hp.y-38)+"px";
+  composer.render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+setTimeout(()=>{ const l=document.getElementById("loading"); l.style.opacity=0; setTimeout(()=>l.remove(),700); }, 500);
+
+/* HUD data wiring */
+const el=id=>document.getElementById(id);
+function paint(ex,live){
+  activeId=ex.id;
+  el("q").textContent=ex.q; el("mAns").textContent=ex.model; el("aAns").textContent=ex.axiom;
+  el("aNode").textContent=ex.node; el("aSrc").textContent=ex.source; el("aCost").textContent=ex.cost;
+  el("aRcpt").textContent=ex.receipt?SHORT(ex.receipt):"pending";
+  const v=el("aVerify"); if(ex.signal){ v.href=NODE_URL+ex.signal; v.style.display=""; } else v.style.display="none";
+  el("status").textContent="routed to "+ex.node+"  /  "+ex.cost+(live?"  /  live":"  /  verified");
+  [...document.getElementById("chips").children].forEach(c=>c.classList.toggle("active",c.dataset.id===ex.id));
+}
+const chips=document.getElementById("chips");
+EXAMPLES.forEach((ex,i)=>{ const b=document.createElement("button"); b.className="chip"; b.dataset.id=ex.id; b.textContent=ex.label;
+  b.onclick=()=>paint(ex); chips.appendChild(b); if(i===0)b.classList.add("active"); });
+paint(EXAMPLES[0]);
+
+const tryBtn=el("tryBtn"), tryInput=el("tryInput");
+async function runLive(){
+  const task=tryInput.value.trim(); if(!task) return;
+  tryBtn.disabled=true; tryBtn.textContent="Routing"; el("status").textContent="buying a fresh answer";
+  try{
+    const r=await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task})});
+    if(!r.ok) throw 0; const d=await r.json(); if(d.error||!d.answer) throw 0;
+    paint({ id:"live", node:(d.specialist||"specialist").toUpperCase(), q:task,
+      model:"A plain model would answer this from memory, with no live source and no receipt.",
+      axiom: typeof d.answer==="string"?d.answer:(d.answer.summary||d.answer.answer||JSON.stringify(d.answer)),
+      source:d.source||d.specialist||"ranked specialist", cost:(d.costUsd!=null?d.costUsd+" USD":"0.01 USD"),
+      receipt:d.receiptHash||"", signal:d.signalHash||"" }, true);
+  }catch(e){ el("status").textContent="live answers rolling out · the three examples are real runs";
+  }finally{ tryBtn.disabled=false; tryBtn.textContent="Ask"; }
+}
+tryBtn.onclick=runLive; tryInput.addEventListener("keydown",e=>{ if(e.key==="Enter") runLive(); });
+</script>
