@@ -1,0 +1,26 @@
+{
+  "name": "verified-intelligence-mind",
+  "version": "1.0.0",
+  "private": false,
+  "description": "A general-purpose agent that routes any task to the top-ranked specialist on Telegraph, pays per call, and returns a cited answer with a verifiable receipt.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "ask": "node src/direct.ts",
+    "baseline": "node src/route.mjs --baseline",
+    "quote-solana": "node src/paysh.ts"
+  },
+  "dependencies": {
+    "@x402/core": "2.25.0",
+    "@x402/evm": "2.25.0",
+    "@x402/fetch": "2.25.0",
+    "viem": "2.56.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
+}
