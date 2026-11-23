@@ -7,3 +7,5 @@ dist/
 .spend.json
 
 web/.playwright-mcp/
+.vercel
+.env*
