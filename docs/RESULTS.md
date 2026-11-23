@@ -14,8 +14,9 @@ One integration, three domains, three specialists, each answer with a verified r
 | Enrich the company Citigold Corporation Limited | company identity | CITIGOLD CORPORATION LIMITED, HQ Fortitude Valley AU, LEI 529900C4YHWJ2XJ8A350, status ACTIVE | 0.01 USD | 0xc140b1687db5231df7b1 | yes |
 | Is https://binance.com safe to use? | URL safety | appears safe, no listing on the phishing and malware feeds checked | 0.01 USD | 0x32c42d238dfcc56fd1c0 | yes |
 
-Verified means the purchase was published by the node, the node confirmed its own hash of the record, and the
-recorded answer matched the answer we were given. Example signal hash for the sanctions call:
+The receipt hashes below are from one run on 2026-11-23. Each call is a fresh purchase, so re-running mints a new
+receipt for the same answer. Verified means the purchase was published by the node, the node confirmed its own
+hash of the record, and the recorded answer matched the answer we were given. Example signal hash for the sanctions call:
 0x7239f8321a78909818c3765a92393f5c64b6c88487b1a3979a3e43d28e04c143. Anyone can recheck it at
 `GET /engine/v1/signal/<hash>` with no wallet and no trust in us.
 

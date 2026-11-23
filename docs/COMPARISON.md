@@ -42,6 +42,13 @@ Task: What is the exact LEI of Citigold Corporation Limited?
 
 The model declines, which is the honest outcome and also the exact gap the specialist fills.
 
+## Reproducing this
+
+The baseline is a language model, so its exact wording changes from run to run. The point does not: with
+specialists off it answers from memory with no source and no receipt, and with the specialist it returns a cited,
+receipted answer. The quotes above are from the runs on 2026-11-23. Each specialist call is a fresh purchase, so a
+re-run produces a new receipt hash for the same answer.
+
 ## What the two runs show
 
 - One integration served both a sanctions check and an identity lookup. There is no code per domain. Adding a
