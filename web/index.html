@@ -10,7 +10,7 @@
 }}
 </script>
 <style>
-  /* One full-screen WebGL world. The UI is a thin glass HUD floating over it, never a sidebar. */
+  /* One full-screen WebGL world that ignites on load. The UI is a thin glass HUD that fades up after. */
   :root {
     --bg: #05070b;
     --fg: #eaf0f8;
@@ -33,8 +33,10 @@
   #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
   .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
     background: radial-gradient(130% 120% at 50% 42%, transparent 55%, rgba(0,0,0,0.5) 100%); }
+  .flash { position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
+    background: radial-gradient(60% 60% at 50% 48%, #d8fff2, #59d6ab 45%, transparent 75%); mix-blend-mode: screen; }
 
-  .hud { position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  .hud { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
     padding: max(20px, env(safe-area-inset-top,0px)) max(20px, env(safe-area-inset-right,0px)) max(20px, env(safe-area-inset-bottom,0px)) max(20px, env(safe-area-inset-left,0px));
     display: grid; grid-template-rows: auto 1fr auto; gap: 14px; }
   .hud a, .hud button, .hud input, .nodeTag { pointer-events: auto; }
@@ -98,17 +100,13 @@
   .verify { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-deep); width: fit-content; }
   .verify:hover { border-color: var(--accent); }
   .ok { color: var(--accent); }
-
-  .loading { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: var(--bg);
-    transition: opacity .6s; font-family: "IBM Plex Mono", monospace; color: var(--muted); font-size: 12px; letter-spacing: .2em; }
-  @media (prefers-reduced-motion: reduce) { .loading { transition: none; } }
 </style>
 
 <canvas id="gl"></canvas>
 <div class="vignette"></div>
-<div class="loading" id="loading">AXIOM</div>
+<div class="flash" id="flash"></div>
 
-<div class="hud">
+<div class="hud" id="hud">
   <div class="top">
     <div>
       <h1 class="mark">A<b>X</b>IOM</h1>
@@ -190,54 +188,47 @@ const ACCENT = new THREE.Color(0x59d6ab);
 
 const canvas = document.getElementById("gl");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:"high-performance" });
-renderer.setClearColor(0x05070b, 1);
+renderer.setClearColor(0x04050a, 1);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
 camera.position.set(0, 0.2, 9.2);
 
-/* fbm nebula background on a large plane, kept dark so bloom ignores it */
-const bgUniforms = { uTime:{value:0}, uRes:{value:new THREE.Vector2(1,1)} };
-const bg = new THREE.Mesh(
-  new THREE.PlaneGeometry(2,2),
-  new THREE.ShaderMaterial({
-    uniforms: bgUniforms, depthWrite:false, depthTest:false,
-    vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.999,1.0); }`,
-    fragmentShader:`precision highp float; varying vec2 vUv; uniform float uTime; uniform vec2 uRes;
-      float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
-      float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
-        vec2 u=f*f*(3.-2.*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
-      float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=.5; } return v; }
-      void main(){ vec2 uv=vUv; vec2 p=(uv-.5)*vec2(uRes.x/uRes.y,1.)*2.3; float t=uTime*0.025;
-        float f=fbm(p*1.4 + vec2(t,-t*0.6) + fbm(p*0.7 - t)*0.7);
-        vec3 deep=vec3(0.016,0.026,0.042), teal=vec3(0.02,0.10,0.095);
-        vec3 col=mix(deep,teal,smoothstep(0.32,0.92,f));
-        float w=smoothstep(0.58,0.80,fbm(p*2.1+vec2(-t*1.3,t))); col+=vec3(0.02,0.13,0.10)*w*0.5;
-        col*=smoothstep(1.45,0.25,length(uv-.5)*1.7);
-        gl_FragColor=vec4(col,1.0); }`
-  })
-);
+/* fbm nebula background, kept dark so bloom ignores it */
+const bgU = { uTime:{value:0}, uRes:{value:new THREE.Vector2(1,1)}, uReveal:{value:0} };
+const bg = new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial({
+  uniforms: bgU, depthWrite:false, depthTest:false,
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.999,1.0); }`,
+  fragmentShader:`precision highp float; varying vec2 vUv; uniform float uTime; uniform vec2 uRes; uniform float uReveal;
+    float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+    float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+      vec2 u=f*f*(3.-2.*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
+    float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=.5; } return v; }
+    void main(){ vec2 uv=vUv; vec2 p=(uv-.5)*vec2(uRes.x/uRes.y,1.)*2.3; float t=uTime*0.025;
+      float f=fbm(p*1.4 + vec2(t,-t*0.6) + fbm(p*0.7 - t)*0.7);
+      vec3 deep=vec3(0.014,0.022,0.038), teal=vec3(0.02,0.10,0.095);
+      vec3 col=mix(deep,teal,smoothstep(0.32,0.92,f));
+      float w=smoothstep(0.58,0.80,fbm(p*2.1+vec2(-t*1.3,t))); col+=vec3(0.02,0.13,0.10)*w*0.5;
+      col*=smoothstep(1.45,0.25,length(uv-.5)*1.7);
+      gl_FragColor=vec4(col*uReveal,1.0); }`
+}));
 bg.frustumCulled=false; scene.add(bg);
 
-/* Axiom core: fresnel-rim icosahedron that blooms on the rim */
-const core = new THREE.Mesh(
-  new THREE.IcosahedronGeometry(0.95, 3),
-  new THREE.ShaderMaterial({
-    uniforms:{ uTime:{value:0}, uColor:{value:ACCENT.clone()} },
-    transparent:true,
-    vertexShader:`varying vec3 vN; varying vec3 vV; uniform float uTime;
-      void main(){ vec3 pos=position; float d=sin(pos.y*5.0+uTime*1.3)*0.012+sin(pos.x*7.0-uTime)*0.010; pos+=normal*d;
-        vec4 mv=modelViewMatrix*vec4(pos,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
-    fragmentShader:`varying vec3 vN; varying vec3 vV; uniform vec3 uColor;
-      void main(){ float fr=pow(1.0-max(dot(vN,vV),0.0),2.4); vec3 core=vec3(0.02,0.05,0.06);
-        vec3 col=core + uColor*fr*2.3; float a=0.22+fr*0.95; gl_FragColor=vec4(col,a); }`
-  })
-);
+/* Axiom core, fresnel rim, reveals after the detonation */
+const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.95, 3), new THREE.ShaderMaterial({
+  uniforms:{ uTime:{value:0}, uColor:{value:ACCENT.clone()}, uReveal:{value:0} }, transparent:true,
+  vertexShader:`varying vec3 vN; varying vec3 vV; uniform float uTime;
+    void main(){ vec3 pos=position; float d=sin(pos.y*5.0+uTime*1.3)*0.012+sin(pos.x*7.0-uTime)*0.010; pos+=normal*d;
+      vec4 mv=modelViewMatrix*vec4(pos,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+  fragmentShader:`varying vec3 vN; varying vec3 vV; uniform vec3 uColor; uniform float uReveal;
+    void main(){ float fr=pow(1.0-max(dot(vN,vV),0.0),2.4); vec3 c=vec3(0.02,0.05,0.06)+uColor*fr*2.3;
+      float a=(0.22+fr*0.95)*uReveal; gl_FragColor=vec4(c,a); }`
+}));
 scene.add(core);
 const wire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5,1),
-  new THREE.MeshBasicMaterial({ color:0x2b3a4e, wireframe:true, transparent:true, opacity:0.5 }));
+  new THREE.MeshBasicMaterial({ color:0x2b3a4e, wireframe:true, transparent:true, opacity:0 }));
 scene.add(wire);
 
-/* specialist nodes on a ring, three real plus dim decoys */
+/* specialist nodes, reveal after the detonation */
 const RING = [
   { ex:EXAMPLES[0], ang:-0.25 }, { ex:EXAMPLES[1], ang:1.35 }, { ex:EXAMPLES[2], ang:2.95 },
   { ex:null, ang:4.15 }, { ex:null, ang:5.05 }, { ex:null, ang:5.85 }
@@ -247,69 +238,109 @@ RING.forEach((slot,i)=>{
   const x=Math.cos(slot.ang)*R, y=Math.sin(slot.ang)*R*0.6, z=(i%2?0.7:-0.7);
   const real=!!slot.ex;
   const m=new THREE.Mesh(new THREE.SphereGeometry(real?0.3:0.15, 24,24),
-    new THREE.MeshBasicMaterial({ color: real?0x6fe3c0:0x2b3647 }));
+    new THREE.MeshBasicMaterial({ color: real?0x6fe3c0:0x2b3647, transparent:true, opacity:0 }));
   m.position.set(x,y,z); scene.add(m);
   const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),m.position.clone()]),
-    new THREE.LineBasicMaterial({ color:0x2b3647, transparent:true, opacity:real?0.55:0.25 }));
+    new THREE.LineBasicMaterial({ color:0x2b3647, transparent:true, opacity:0 }));
   scene.add(line);
   const pulse=new THREE.Mesh(new THREE.SphereGeometry(0.11,12,12), new THREE.MeshBasicMaterial({ color:ACCENT }));
   pulse.visible=false; scene.add(pulse);
   let tag=null;
-  if(real){ tag=document.createElement("div"); tag.className="nodeTag"; tag.textContent=slot.ex.node;
+  if(real){ tag=document.createElement("div"); tag.className="nodeTag"; tag.textContent=slot.ex.node; tag.style.opacity=0;
     document.getElementById("mid").appendChild(tag); }
   nodes.push({ ...slot, m, line, pulse, base:m.position.clone(), real, tag });
 });
 
-/* drifting particle field for depth */
-const PN=320, pp=new Float32Array(PN*3);
-for(let i=0;i<PN;i++){ pp[i*3]=(THREE.MathUtils.randFloatSpread(34)); pp[i*3+1]=THREE.MathUtils.randFloatSpread(22); pp[i*3+2]=-4-Math.random()*26; }
-const particles=new THREE.Points(new THREE.BufferGeometry().setAttribute("position",new THREE.BufferAttribute(pp,3)),
-  new THREE.PointsMaterial({ color:0x3a4a64, size:0.06, transparent:true, opacity:0.8 }));
-scene.add(particles);
+/* ignition particles: detonate from center, then collapse into an ambient field */
+const PN = 6500;
+const pos = new Float32Array(PN*3), home = new Float32Array(PN*3), vel = new Float32Array(PN*3);
+for(let i=0;i<PN;i++){
+  // home: a wide ambient starfield, kept off the center so the core stays the centerpiece
+  const rad = 7 + Math.random()*16, u=Math.random()*6.28, v=Math.acos(2*Math.random()-1);
+  home[i*3]   = Math.sin(v)*Math.cos(u)*rad;
+  home[i*3+1] = Math.sin(v)*Math.sin(u)*rad*0.7;
+  home[i*3+2] = -2 + Math.cos(v)*rad - Math.random()*6;
+  const su=Math.random()*6.28, sv=Math.acos(2*Math.random()-1), sp=1.0+Math.random()*2.6;
+  vel[i*3]=Math.sin(sv)*Math.cos(su)*sp; vel[i*3+1]=Math.sin(sv)*Math.sin(su)*sp; vel[i*3+2]=Math.cos(sv)*sp;
+  pos[i*3]=pos[i*3+1]=pos[i*3+2]=0;
+}
+const pg = new THREE.BufferGeometry();
+pg.setAttribute("position", new THREE.BufferAttribute(pos,3));
+pg.setAttribute("aHome", new THREE.BufferAttribute(home,3));
+pg.setAttribute("aVel", new THREE.BufferAttribute(vel,3));
+const pMat = new THREE.ShaderMaterial({
+  uniforms:{ uT:{value:0}, uPix:{value:1} }, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  vertexShader:`attribute vec3 aHome; attribute vec3 aVel; uniform float uT; uniform float uPix; varying float vB;
+    void main(){ float boom=1.0-exp(-max(uT-0.35,0.0)*2.6); vec3 bp=aVel*boom*5.0;
+      float c=clamp((uT-2.0)/1.9,0.0,1.0); c=c*c*(3.0-2.0*c); vec3 p=mix(bp,aHome,c);
+      p*=smoothstep(0.0,0.3,uT);
+      vec4 mv=modelViewMatrix*vec4(p,1.0); gl_Position=projectionMatrix*mv;
+      vB=mix(1.7,0.42,c);
+      gl_PointSize=uPix*(1.0+2.4*(1.0-boom))*vB*(230.0/max(-mv.z,0.1)); }`,
+  fragmentShader:`varying float vB;
+    void main(){ float d=length(gl_PointCoord-0.5); if(d>0.5) discard; float a=smoothstep(0.5,0.0,d);
+      vec3 col=mix(vec3(0.33,0.84,0.66), vec3(0.92,1.0,0.97), clamp(vB-0.9,0.0,1.0));
+      gl_FragColor=vec4(col, a*clamp(vB,0.18,1.0)); }`
+});
+const points = new THREE.Points(pg, pMat); points.frustumCulled=false; scene.add(points);
 
-/* post: single bloom pass tuned so only emissive core/nodes/lines glow */
+/* post: bloom that spikes at detonation */
 const composer=new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.9, 0.55, 0.5);
-composer.addPass(bloom);
-composer.addPass(new OutputPass());
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.9, 0.6, 0.5);
+composer.addPass(bloom); composer.addPass(new OutputPass());
 
-const mid=document.getElementById("mid");
-function project(v){ const p=v.clone().project(camera); const w=canvas.clientWidth,h=canvas.clientHeight;
-  return { x:(p.x*.5+.5)*w, y:(-p.y*.5+.5)*h }; }
+const mid=document.getElementById("mid"), hud=document.getElementById("hud"), flash=document.getElementById("flash");
+function project(v){ const p=v.clone().project(camera); const w=canvas.clientWidth,h=canvas.clientHeight; return { x:(p.x*.5+.5)*w, y:(-p.y*.5+.5)*h }; }
 function resize(){ const w=innerWidth,h=innerHeight; renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.setSize(w,h); composer.setSize(w,h); bloom.setSize(w,h); bgUniforms.uRes.value.set(w,h);
-  camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  renderer.setSize(w,h); composer.setSize(w,h); bloom.setSize(w,h); bgU.uRes.value.set(w,h);
+  pMat.uniforms.uPix.value=Math.min(devicePixelRatio,2); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 addEventListener("resize",resize); resize();
 
-let activeId="sanctions", camTarget=new THREE.Vector3(0,0.2,9.2), lookTarget=new THREE.Vector3(0,0,0), t0=performance.now();
-const hubTag=document.createElement("div"); hubTag.className="nodeTag hub"; hubTag.textContent="AXIOM"; mid.appendChild(hubTag);
+const hubTag=document.createElement("div"); hubTag.className="nodeTag hub"; hubTag.textContent="AXIOM"; hubTag.style.opacity=0; mid.appendChild(hubTag);
+let activeId="sanctions", camT=new THREE.Vector3(0,0.2,9.2), lookT=new THREE.Vector3(0,0,0), t0=performance.now();
+const INTRO = reduce ? 0.01 : 4.2;
 
 function frame(now){
-  const t=(now-t0)/1000; bgUniforms.uTime.value=t; core.material.uniforms.uTime.value=t;
+  const t=(now-t0)/1000;
+  const intro = t < INTRO;
+  bgU.uTime.value=t; core.material.uniforms.uTime.value=t; pMat.uniforms.uT.value=reduce?6:t;
+
+  // reveal curves
+  const rev=reduce?1:THREE.MathUtils.smoothstep(t,2.5,3.9);
+  bgU.uReveal.value=reduce?1:THREE.MathUtils.smoothstep(t,1.2,3.6);
+  core.material.uniforms.uReveal.value=rev; wire.material.opacity=rev*0.5;
+  // flash + bloom spike at detonation (~0.5s)
+  if(!reduce){ const spike=Math.exp(-Math.pow((t-0.5)/0.32,2)); bloom.strength=0.9+2.0*spike; flash.style.opacity=(0.95*spike).toFixed(3); }
+  else { flash.style.opacity=0; }
+
   if(!reduce){ core.rotation.y=t*0.28; core.rotation.x=t*0.12; wire.rotation.y=-t*0.1; wire.rotation.z=t*0.05;
-    scene.rotation.y=Math.sin(t*0.08)*0.22; particles.rotation.y=t*0.01; }
+    scene.rotation.y=Math.sin(t*0.08)*0.22; points.rotation.y=t*0.012; }
   core.scale.setScalar(1+Math.sin(t*1.6)*0.03);
-  // camera eases toward a framing of the active node
-  const act=nodes.find(n=>n.ex&&n.ex.id===activeId);
-  if(act){ const dir=act.base.clone().normalize(); camTarget.set(act.base.x*0.35+dir.x*1.5, act.base.y*0.35+1.0, 8.4);
-    lookTarget.lerp(act.base.clone().multiplyScalar(0.5),0.06); }
-  camera.position.lerp(camTarget, reduce?1:0.03); camera.lookAt(lookTarget);
+
+  // camera: dolly back through the blast during intro, then ease to the active node
+  if(intro && !reduce){ const k=THREE.MathUtils.smoothstep(t,0.35,INTRO); camera.position.set(0,0.2, 3.4+(9.2-3.4)*k); camera.lookAt(0,0,0); }
+  else {
+    const act=nodes.find(n=>n.ex&&n.ex.id===activeId);
+    if(act){ const dir=act.base.clone().normalize(); camT.set(act.base.x*0.35+dir.x*1.5, act.base.y*0.35+1.0, 8.4); lookT.lerp(act.base.clone().multiplyScalar(0.5),0.06); }
+    camera.position.lerp(camT, reduce?1:0.03); camera.lookAt(lookT);
+  }
+
   nodes.forEach(n=>{
     const on=n.ex&&n.ex.id===activeId;
+    n.m.material.opacity=(n.real?1:0.9)*rev; n.line.material.opacity=(on?0.9:(n.real?0.5:0.25))*rev;
     n.m.material.color.setHex(on?0x8ff0d4:(n.real?0x6fe3c0:0x2b3647));
     n.m.scale.setScalar(on?1.55+Math.sin(t*5)*0.12:(n.real?1:0.9));
-    n.line.material.color.setHex(on?0x59d6ab:0x2b3647); n.line.material.opacity=on?0.9:(n.real?0.5:0.25);
-    if(on&&!reduce){ n.pulse.visible=true; const k=(t*0.55)%1; n.pulse.position.copy(n.base).multiplyScalar(k); }
-    else n.pulse.visible=false;
-    if(n.tag){ const pr=project(n.m.position); n.tag.style.left=pr.x+"px"; n.tag.style.top=(pr.y-24)+"px"; n.tag.classList.toggle("on",!!on); }
+    n.line.material.color.setHex(on?0x59d6ab:0x2b3647);
+    if(on&&!reduce&&!intro){ n.pulse.visible=true; const k=(t*0.55)%1; n.pulse.position.copy(n.base).multiplyScalar(k); } else n.pulse.visible=false;
+    if(n.tag){ const pr=project(n.m.position); n.tag.style.left=pr.x+"px"; n.tag.style.top=(pr.y-24)+"px"; n.tag.style.opacity=rev*(on?1:0.8); n.tag.classList.toggle("on",!!on); }
   });
-  const hp=project(new THREE.Vector3(0,0,0)); hubTag.style.left=hp.x+"px"; hubTag.style.top=(hp.y-38)+"px";
-  composer.render();
-  requestAnimationFrame(frame);
+  const hp=project(new THREE.Vector3(0,0,0)); hubTag.style.left=hp.x+"px"; hubTag.style.top=(hp.y-38)+"px"; hubTag.style.opacity=rev;
+  hud.style.opacity = reduce?1:THREE.MathUtils.smoothstep(t,3.1,4.2).toFixed(3);
+
+  composer.render(); requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-setTimeout(()=>{ const l=document.getElementById("loading"); l.style.opacity=0; setTimeout(()=>l.remove(),700); }, 500);
 
 /* HUD data wiring */
 const el=id=>document.getElementById(id);
@@ -339,7 +370,7 @@ async function runLive(){
       axiom: typeof d.answer==="string"?d.answer:(d.answer.summary||d.answer.answer||JSON.stringify(d.answer)),
       source:d.source||d.specialist||"ranked specialist", cost:(d.costUsd!=null?d.costUsd+" USD":"0.01 USD"),
       receipt:d.receiptHash||"", signal:d.signalHash||"" }, true);
-  }catch(e){ el("status").textContent="live answers rolling out · the three examples are real runs";
+  }catch(e){ el("status").textContent="live answers rolling out  /  the three examples are real runs";
   }finally{ tryBtn.disabled=false; tryBtn.textContent="Ask"; }
 }
 tryBtn.onclick=runLive; tryInput.addEventListener("keydown",e=>{ if(e.key==="Enter") runLive(); });
