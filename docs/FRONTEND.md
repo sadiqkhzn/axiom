@@ -32,7 +32,7 @@ Notes for the route:
 
 ## What is in the page
 
-1. **Hero (the one bold moment).** A real-time ASCII landscape (Three.js r160, pinned) flown over toward a radiant sun inside an arched portal.
+1. **Hero (the one bold moment).** A real-time ASCII landscape (Three.js r160, pinned) flown over toward a radiant sun inside an arched portal. The landscape is a fixed backdrop behind the whole page: as you scroll, the camera climbs and the terrain dims slightly, and every section sits on a borderless panel that fades into it.
    - Receipt towers stand on the hills, linked by dashed lines.
    - Each question draws an arc to a tower, which lights up and releases a receipt block; a shockwave crosses the terrain.
    - Interactions: move to lift the ground and scan, hold to fly faster, click to drop a probe, hover a tower, use the light/dark toggle.
@@ -48,7 +48,8 @@ Notes for the route:
   - `ax:route` (detail = the answer object): pick a tower, start the arc.
   - `ax:arrive`: light the tower, receipt block, shockwave, sun flare.
   - `ax:mode` (`"light"` or `"dark"`): recolour.
-- If WebGL2 or the CDN is unavailable, the hero gets the class `nogl` and stays fully usable as a static paper hero.
+- Scroll progress is exposed as the CSS variable `--sp` on `<html>` (0 at the top, 1 after one screen). It fades the halo, labels and scrim.
+- If WebGL2 or the CDN is unavailable, the backdrop gets the class `nogl` and stays fully usable as a static paper hero.
 - `prefers-reduced-motion`: no flight or animation; questions resolve instantly.
 - The three example datasets appear twice: in the `EX` array in the interface script and as static HTML in `#examples`. Keep them in sync if they change.
 - External scripts: `three@0.160.0` from cdn.jsdelivr.net only. Fonts: Google Fonts (Geist, Geist Mono, Red Hat Display).
