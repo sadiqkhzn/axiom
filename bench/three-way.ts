@@ -50,8 +50,8 @@ async function buy(c: Candidate) {
 async function main() {
   const subject = process.argv[2] ?? 'Rosoboronexport';
   // Sanctions intent. Ranked = top-tier 1.0 specialist (731002). Listing pick = a live but lower-ranked
-  // provider an agent might choose from the catalog by its authoritative name (78021, "OFAC SDN Entity
-  // Screen", score about 0.86).
+  // provider an agent might choose from the catalog by its authoritative-sounding name (miner 78021,
+  // score about 0.86).
   const candidates: Candidate[] = [
     { label: 'Pick from the listing (unranked)', minerId: '78021', endpoint: '/query', param: 'entity', value: subject },
     { label: 'Axiom, top-ranked specialist', minerId: '731002', endpoint: '/screen', param: 'name', value: subject },

@@ -14,7 +14,7 @@ a real OFAC-listed entity. Clearing it by mistake is a consequential error.)
 1. **Frontier model on its own.** The agent answers from its model with specialists off.
    Reproduce: `node src/route.mjs --baseline "Is Rosoboronexport on the OFAC sanctions list?"`
 2. **Pick a provider from the listing.** An agent that chooses a provider by its name in the catalog, not by
-   rank, lands on "OFAC SDN Entity Screen" (a plausible, authoritative-sounding provider ranked about #15 of 31).
+   rank, lands on a plausible, authoritative-sounding provider ranked about #15 of 31.
    Reproduce: `node bench/three-way.ts "Rosoboronexport"` (this leg).
 3. **Axiom: the top-ranked specialist.** The task is routed to a top-ranked, independently evaluated sanctions
    specialist and paid per call. Reproduce: `node bench/three-way.ts "Rosoboronexport"` (this leg).
