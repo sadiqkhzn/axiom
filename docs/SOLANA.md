@@ -27,19 +27,29 @@ The output is the parsed charge spec: the network, the USDC mint, the amount, th
 token program, and the base64 charge request. This confirms the code correctly reads what Pay.sh asks a payer to
 sign.
 
-## Capture a live settlement receipt on the sandbox, no real money
+## A live settlement on the sandbox, no real money
 
 ```bash
 brew install pay
-pay --version
-pay setup
-pay whoami
-pay --sandbox curl https://debugger.pay.sh/mpp/quote/AAPL
+pay --sandbox fetch https://debugger.pay.sh/mpp/quote/AAPL
 ```
 
-For contrast, a plain `curl https://debugger.pay.sh/mpp/quote/AAPL` returns a 402, while the `pay --sandbox` call
-handles the payment and returns the paid response. Keep the paid response and the Payment-Receipt header as
-evidence.
+In sandbox mode `pay fetch` generates a localnet wallet on first use, funds it from the sandbox validator, pays the
+MPP charge and returns the paid response. A plain `curl https://debugger.pay.sh/mpp/quote/AAPL` returns a 402; the
+`pay --sandbox` call handles the payment and returns the protected content, which is the proof that settlement
+completed.
+
+Verified live on 2026-11-24. The generated localnet wallet was
+`CiN97jWN741oxc7x18PNjdjpb9F4huDcnAUmdq1hZb9M`, and the paid call returned the gated content:
+
+```json
+{"symbol":"AAPL","price":"44.41","currency":"USD","source":"mpp-demo"}
+```
+
+The sandbox validator at `402.surfnet.dev` is an ephemeral test network: the wallet is funded on first use and the
+balance does not persist, so a later run may report the wallet empty until the sandbox refunds it. The point the run
+establishes is that the full flow works end to end on Solana: a 402 charge, a localnet USDC payment, and the
+protected resource returned.
 
 ## The MPP charge contract, for reference
 
