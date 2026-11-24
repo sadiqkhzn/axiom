@@ -42,25 +42,56 @@ function classify(task: string): keyof typeof SPECIALISTS | null {
   return null;
 }
 
-// Reduce the question to the exact subject the miner endpoint expects (a url, a quoted phrase, or a name).
+// Framing words and acronyms that are never the subject (OFAC, LEI, SDN, "company", "exact", ...).
+const SUBJECT_STOP = new Set(
+  'ofac sdn ofsi un eu uk us usa lei tls ssl url ssn vat iban swift bic treasury sanction sanctions sanctioned watchlist watch blocklist blacklist embargo listed company companies entity entities business firm legal jurisdiction incorporated registered exact government a an the is are was were be been do does did can could would should it on in of to for by with from against per and or not any all please check screen screened scan lookup look resolve enrich verify about who what which whose when where why how tell me give show list lists name named'.split(
+      /\s+/,
+    ),
+);
+const stripEdges = (w: string) => w.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
+
+// Reduce the question to the exact subject the miner endpoint expects: a url, a quoted phrase, or the
+// entity itself (the longest run of proper-noun tokens, skipping framing words). Robust to phrasing.
 function subjectOf(task: string, intent: keyof typeof SPECIALISTS): string {
-  // URL safety: take the http(s) token verbatim (trim trailing punctuation), never the framing words.
+  // URL safety: take the http(s) token or a bare domain verbatim, never the framing words.
   if (intent === 'URL_SAFE_GENERAL') {
     const u = task.match(/\bhttps?:\/\/\S+/i);
-    if (u) return u[0].replace(/[).,?!"']+$/, '');
+    if (u) return u[0].replace(/[).,?!"'”’]+$/, '');
+    const d = task.match(/\b([a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?)/i);
+    if (d) return d[1].replace(/[).,?!"'”’]+$/, '');
   }
-  // A quoted phrase is the subject if the user gave one.
-  const quoted = task.match(/["']([^"']{2,})["']/);
+  // A quoted phrase is the strongest signal.
+  const quoted = task.match(/["'“‘]([^"'”’]{2,})["'”’]/);
   if (quoted) return quoted[1].trim();
-  // Otherwise strip framing words (including "the company" / "enrich") down to the bare name.
-  return task
-    .replace(/^[^A-Za-z0-9]*/, '')
-    .replace(/\b(please|is|are|was|does|do|check|screen|look\s*up|resolve|enrich|tell me about|who\s+is|what\s+is|the\s+company|the\s+entity|company|entity|the)\b/gi, ' ')
-    .replace(/\bon (any|a|the)? ?(sanctions?|watch)\s*list\??/gi, ' ')
-    .replace(/[?.]+\s*$/, '')
-    .replace(/["']/g, '')
-    .replace(/\s+/g, ' ')
-    .trim() || task.trim();
+  // The entity: the longest consecutive run of proper-noun tokens that are not framing words.
+  const tokens = task.replace(/[?.!,;:]+/g, ' ').split(/\s+/).filter(Boolean);
+  const isEntity = (w: string) => {
+    const bare = stripEdges(w);
+    if (!bare || SUBJECT_STOP.has(bare.toLowerCase())) return false;
+    return /^[A-Z]/.test(bare) || /\d/.test(bare);
+  };
+  let best: string[] = [];
+  let cur: string[] = [];
+  for (const w of tokens) {
+    if (isEntity(w)) {
+      cur.push(stripEdges(w));
+      if (cur.length > best.length) best = cur.slice();
+    } else cur = [];
+  }
+  if (best.length) return best.join(' ');
+  // Fallback for an all-lowercase subject: strip framing words down to the bare name.
+  return (
+    task
+      .replace(/^[^A-Za-z0-9]*/, '')
+      .replace(
+        /\b(please|is|are|was|does|do|did|check|screen|scan|look\s*up|resolve|enrich|verify|tell me about|who\s+is|what\s+is|the\s+company|the\s+entity|company|entity|the|on|in|of|to|for|against|per|any|a|an|exact|lei|ofac|sdn|ofsi|sanctions?|sanctioned|watch\s*list|blocklist|embargo|government|list|name)\b/gi,
+        ' ',
+      )
+      .replace(/[?.]+\s*$/, '')
+      .replace(/["'“”‘’]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim() || task.trim()
+  );
 }
 
 function loadKey(): string {

@@ -299,14 +299,34 @@ function classify(t) {
   if (/\b(company|entity|lei|legal name|jurisdiction|incorporat|who\s+is .*(ltd|inc|corp|pty)|enrich)\b/.test(s)) return "B2B_IDENTITY_ENRICHMENT_GENERAL";
   return null;
 }
+var SUBJECT_STOP = new Set("ofac sdn ofsi un eu uk us usa lei tls ssl url ssn vat iban swift bic treasury sanction sanctions sanctioned watchlist watch blocklist blacklist embargo listed company companies entity entities business firm legal jurisdiction incorporated registered exact government a an the is are was were be been do does did can could would should it on in of to for by with from against per and or not any all please check screen screened scan lookup look resolve enrich verify about who what which whose when where why how tell me give show list lists name named".split(/\s+/));
+function stripEdges(w) {
+  return w.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "");
+}
 function subjectOf(task, intent) {
   if (intent === "URL_SAFE_GENERAL") {
     const u = task.match(/\bhttps?:\/\/\S+/i);
-    if (u) return u[0].replace(/[).,?!"']+$/, "");
+    if (u) return u[0].replace(/[).,?!"'”’]+$/, "");
+    const d = task.match(/\b([a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?)/i);
+    if (d) return d[1].replace(/[).,?!"'”’]+$/, "");
   }
-  const q = task.match(/["']([^"']{2,})["']/);
+  const q = task.match(/["'“‘]([^"'”’]{2,})["'”’]/);
   if (q) return q[1].trim();
-  return task.replace(/^[^A-Za-z0-9]*/, "").replace(/\b(please|is|are|was|does|do|check|screen|look\s*up|resolve|enrich|tell me about|who\s+is|what\s+is|the\s+company|the\s+entity|company|entity|the)\b/gi, " ").replace(/\bon (any|a|the)? ?(sanctions?|watch)\s*list\??/gi, " ").replace(/[?.]+\s*$/, "").replace(/["']/g, "").replace(/\s+/g, " ").trim() || task.trim();
+  const tokens = task.replace(/[?.!,;:]+/g, " ").split(/\s+/).filter(Boolean);
+  const isEntity = (w) => {
+    const bare = stripEdges(w);
+    if (!bare || SUBJECT_STOP.has(bare.toLowerCase())) return false;
+    return /^[A-Z]/.test(bare) || /\d/.test(bare);
+  };
+  let best = [], cur = [];
+  for (const w of tokens) {
+    if (isEntity(w)) {
+      cur.push(stripEdges(w));
+      if (cur.length > best.length) best = cur.slice();
+    } else cur = [];
+  }
+  if (best.length) return best.join(" ");
+  return task.replace(/^[^A-Za-z0-9]*/, "").replace(/\b(please|is|are|was|does|do|did|check|screen|scan|look\s*up|resolve|enrich|verify|tell me about|who\s+is|what\s+is|the\s+company|the\s+entity|company|entity|the|on|in|of|to|for|against|per|any|a|an|exact|lei|ofac|sdn|ofsi|sanctions?|sanctioned|watch\s*list|blocklist|embargo|government|list|name)\b/gi, " ").replace(/[?.]+\s*$/, "").replace(/["'“”‘’]/g, "").replace(/\s+/g, " ").trim() || task.trim();
 }
 var DAILY_MAX = 50;
 var IP_MAX = 3;
