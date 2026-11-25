@@ -46,7 +46,21 @@ node src/agent.ts "Rosoboronexport" --order 50000
 node bench/clearance.ts
 ```
 
-Add `--settle` (or omit `--no-settle`) to also execute the Solana settlement for each spend.
+By default the agent only **reads** the Pay.sh charge terms for each spend — it settles nothing. To
+execute a real settlement with **test tokens**, set the mode explicitly:
+
+```bash
+# local sandbox validator (test tokens)
+PAYSH_MODE=sandbox node bench/clearance.ts --settle
+
+# Solana devnet with a faucet-funded account (test tokens)
+PAYSH_MODE=devnet PAYSH_ACCOUNT=<devnet account name> node bench/clearance.ts --settle
+```
+
+**Safety:** this never spends real money. Execution is off unless `PAYSH_MODE` is set; the only networks
+it will settle on are the local sandbox and Solana devnet (both test tokens); and before any devnet
+settlement it checks the named account's network and **refuses if the account is on mainnet**. There is
+no code path that settles against mainnet or the default account.
 
 ### Example — clean supplier (GO)
 
@@ -77,10 +91,12 @@ Decision: STOP ⛔
 
 - **Intelligence rail — works today.** Real paid calls to our Telegraph miners, each with a verifiable
   receipt and a node-verified signal hash, over x402 in test USDC on Ethereum Sepolia.
-- **Settlement rail — Pay.sh on Solana.** The agent reads the live Pay.sh charge terms for each spend in
-  code (`src/paysh.ts`, `src/settle.ts`) and executes settlement on the public sandbox through the official
-  `pay` tool (see `docs/SOLANA.md`). The sandbox validator is ephemeral: its wallet is funded on first use
-  and resets, so a settled run depends on the sandbox having funds at that moment. When it does not, the
-  agent records the signed charge terms and marks the settlement pending rather than blocking the clearance.
-- **Next step:** a persistent Pay.sh-gated endpoint on Solana devnet with a funded wallet (or the in-repo
-  programmatic signer noted in `docs/SOLANA.md`) so every run produces a completed on-chain settlement.
+- **Settlement rail — Pay.sh on Solana (test tokens only).** The agent reads the live Pay.sh charge terms
+  for each spend in code (`src/paysh.ts`, `src/settle.ts`). Settlement execution is **off by default** and,
+  when enabled, runs only on the local sandbox or Solana **devnet** with test tokens through the official
+  `pay` tool (see `docs/SOLANA.md`). A hard guard refuses to settle with any account on mainnet, so no run
+  can spend real money. The sandbox validator is ephemeral (its wallet resets); Solana devnet with a
+  faucet-funded account is the stable path for repeatable settlement evidence.
+- **To produce completed-settlement evidence:** create a devnet pay account, fund it from the free devnet
+  faucet, then run with `PAYSH_MODE=devnet PAYSH_ACCOUNT=<name>`. Each spend then settles on devnet and the
+  agent records the transaction signature and the gated resource returned after the 402 clears.
